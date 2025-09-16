@@ -20,33 +20,32 @@ class ReportPage extends StatelessWidget {
       color: panelBg,
       child: Row(
         children: [
-          const Expanded(
+          const Text(
+            'ZPRÁVA O BRZDĚNÍ',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider(color: Colors.white, thickness: 1)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              'ZPRÁVA O BRZDĚNÍ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-
+              data.trainNumber,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Row(
-              children: [
-                const Expanded(child: Divider(color: Colors.white, thickness: 1)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    data.trainNumber,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-                const Expanded(child: Divider(color: Colors.white, thickness: 1)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
+          const Expanded(child: Divider(color: Colors.white, thickness: 1)),
+          const SizedBox(width: 8),
           Text(
             DateFormat('dd.MM.yyyy').format(now),
-            style: const TextStyle(fontSize: 13, color: Colors.white),
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
         ],
       ),
@@ -202,7 +201,7 @@ class ReportPage extends StatelessWidget {
         Row(children: [
           Expanded(flex: 3, child: dataCell('Délka vlaku:', data.trainLength, bg: darkCell)),
           const SizedBox(width: 6),
-          Expanded(flex: 2, child: dataCell('', data.trainCars.toString(), bg: darkCell, align: TextAlign.center)),
+          Expanded(flex: 2, child: dataCell('', data.trainWheels.toString(), bg: darkCell, align: TextAlign.center)),
           const SizedBox(width: 6),
           Expanded(
             flex: 5,
@@ -264,99 +263,99 @@ class ReportPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-     /* appBar: AppBar(
-        title: Text("Zpráva o brzdění – ${data.trainNumber}", overflow: TextOverflow.ellipsis ,style: TextStyle(color: Color(0xffffffff)),),
-        backgroundColor: Colors.black87,
-      ),*/
-      body: SingleChildScrollView(
-        child: Column(children: [
-          header(context),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _pad),
-            child: Row(
-              children: [
-                Expanded(child: _SmallInfoBox(title: 'Výchozí ŽST:', value: data.departureStation)),
-                Expanded(child: _SmallInfoBox(title: 'Sepsáno v:', value: data.currentStation)),
-                Expanded(child: _SmallInfoBox(title: 'Konečná ŽST:', value: data.destinationStation)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _pad),
-            child: Row(
-              children: [
-                Expanded(child: coloredIndicatorSplit('Překl. záchran. brzdy', data.nbuStatus, Colors.green)),
-                const SizedBox(width: 4),
-                Expanded(child: coloredIndicatorSplit('Systém ovládání dveří', data.doorControlStatus, Colors.amber)),
-                const SizedBox(width: 4),
-                Expanded(child: coloredIndicatorSplit('Napájení na 25 kV AC', data.powerSupplyStatus, Colors.lightBlue)),
-                const SizedBox(width: 4),
-                Expanded(child: coloredIndicatorSplit('Horní rychl. - vozy', data.highSpeedCarsStatus, Colors.brown)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          bigTable(context),
-          const SizedBox(height: 8),
-        ]),
-      ),
-
-
-    bottomNavigationBar: Container(
-      padding: const EdgeInsets.all(12),
-      color: Colors.grey[900],
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white12,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      body: SafeArea( // 🔹 Přidá ochranu proti hornímu a dolnímu překrytí
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              header(context),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _pad),
+                child: Row(
+                  children: [
+                    Expanded(child: _SmallInfoBox(title: 'Výchozí ŽST:', value: data.departureStation)),
+                    Expanded(child: _SmallInfoBox(title: 'Sepsáno v:', value: data.currentStation)),
+                    Expanded(child: _SmallInfoBox(title: 'Konečná ŽST:', value: data.destinationStation)),
+                  ],
+                ),
               ),
-              child: const Text('ZAVŘÍT BEZ POTVRZENÍ'),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TrainSelectionPage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _pad),
+                child: Row(
+                  children: [
+                    Expanded(child: coloredIndicatorSplit('Překl. záchran. brzdy', data.nbuStatus, Colors.green)),
+                    const SizedBox(width: 4),
+                    Expanded(child: coloredIndicatorSplit('Systém ovládání dveří', data.doorControlStatus, Colors.amber)),
+                    const SizedBox(width: 4),
+                    Expanded(child: coloredIndicatorSplit('Napájení na 25 kV AC', data.powerSupplyStatus, Colors.lightBlue)),
+                    const SizedBox(width: 4),
+                    Expanded(child: coloredIndicatorSplit('Horní rychl. - vozy', data.highSpeedCarsStatus, Colors.brown)),
+                  ],
+                ),
               ),
-              child: const Text('POTVRDIT A ZAVŘÍT'),
-            ),
+              const SizedBox(height: 6),
+              bigTable(context),
+              const SizedBox(height: 8),
+            ],
           ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: otevřít VV
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white12,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('OTEVŘÍT VV'),
-          ),
-        ],
+        ),
       ),
-    ),
+      bottomNavigationBar: SafeArea( // 🔹 ochrana i pro spodní část
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          color: Colors.grey[900],
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white12,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('ZAVŘÍT BEZ POTVRZENÍ'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const TrainSelectionPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('POTVRDIT A ZAVŘÍT'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: otevřít VV
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white12,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('OTEVŘÍT VV'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
-  }
-Widget bottomBar(BuildContext context) {
+
+  Widget bottomBar(BuildContext context) {
   const double _pad = 12;
 
   return Container(
@@ -418,4 +417,5 @@ Widget bottomBar(BuildContext context) {
       ],
     ),
   );
+}
 }

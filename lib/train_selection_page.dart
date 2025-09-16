@@ -13,6 +13,7 @@ class TrainSelectionPage extends StatelessWidget {
         trainNumber: "123",
         maxSpeed: "160",
         trainLength: "250",
+        trainWheels: "24n",
         trainCars: 8,
         brakeTypeD: "2",
         brakeTypeK: "4",
@@ -38,8 +39,6 @@ class TrainSelectionPage extends StatelessWidget {
         jzbLocation: "",
         jzbPerformedBy: "",
         nbuStatus: "NBÜ",
-      //  doorSystem: "Elektronický",
-      //  power25kV: "Zapnuto",
         topSpeedAllowed: "160",
         doorControlStatus: "---",
         powerSupplyStatus: "---",
@@ -48,25 +47,40 @@ class TrainSelectionPage extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212), // tmavé pozadí
       appBar: AppBar(
-        title: const Text("Výběr vlaku",
-        style: TextStyle(color: Color(0xffffffff)),)
+        backgroundColor: const Color(0xFF1E1E1E), // tmavý appbar
+        title: const Text(
+          "Výběr vlaku",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: ListView.builder(
         itemCount: trains.length,
         itemBuilder: (context, index) {
           final train = trains[index];
-          return ListTile(
-            title: Text("${train.trainName} (${train.trainNumber})"),
-            subtitle: Text("Rychlost: ${train.maxSpeed} km/h"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReportPage(data: train),
-                ),
-              );
-            },
+          return Card(
+            color: const Color(0xFF1E1E1E), // tmavé pozadí dlaždic
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: ListTile(
+              title: Text(
+                "${train.trainName} (${train.trainNumber})",
+                style: const TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                "Rychlost: ${train.maxSpeed} km/h",
+                style: const TextStyle(color: Colors.white70),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReportPage(data: train),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

@@ -5,6 +5,7 @@ class ReportData {
   final String maxSpeed;
   final String trainLength;
   final int trainCars;
+  final String trainWheels;
   final String brakeTypeD;
   final String brakeTypeK;
   final String brakeMode;
@@ -30,7 +31,6 @@ class ReportData {
   final String destinationStation;
 
   // UZB / JZB
-
   final String uzbLocation;
   final String uzbPerformedBy;
 
@@ -39,9 +39,7 @@ class ReportData {
 
   // Systémy a stav
   final String nbuStatus;
- /* final String doorSystem;
-  final String power25kV;
- */ final String topSpeedAllowed;
+  final String topSpeedAllowed;
   final String doorControlStatus;
   final String powerSupplyStatus;
   final String highSpeedCarsStatus;
@@ -52,6 +50,7 @@ class ReportData {
     required this.maxSpeed,
     required this.trainLength,
     required this.trainCars,
+    required this.trainWheels,
     required this.brakeTypeD,
     required this.brakeTypeK,
     required this.brakeMode,
@@ -71,61 +70,54 @@ class ReportData {
     required this.departureStation,
     required this.currentStation,
     required this.destinationStation,
-
     required this.uzbLocation,
     required this.uzbPerformedBy,
-
     required this.jzbLocation,
     required this.jzbPerformedBy,
     required this.nbuStatus,
-  /*  required this.doorSystem,
-    required this.power25kV,
-  */  required this.topSpeedAllowed,
+    required this.topSpeedAllowed,
     required this.doorControlStatus,
     required this.powerSupplyStatus,
     required this.highSpeedCarsStatus,
   });
 
-  // Export do CSV
+  // Export do CSV (sloupce musí sedět s fromCsvRow)
   List<String> toCsvRow() {
     return [
-      trainName,
-      trainNumber,
-      maxSpeed,
-      trainLength,
-      trainCars.toString(),
-      brakeTypeD,
-      brakeTypeK,
-      brakeMode,
-      brakingModeP,
-      brakingModeR,
-      brakingModeRMg,
-      brakePercent,
-      brakingPercentageActual,
-      brakingPercentageRequired,
-      brakingPercentageMissing,
-      activeVehiclesCount.toString(),
-      transportVehiclesCount.toString(),
-      totalVehiclesCount.toString(),
-      activeVehiclesWeight.toString(),
-      transportVehiclesWeight.toString(),
-      totalVehiclesWeight.toString(),
-      departureStation,
-      currentStation,
-      destinationStation,
-
-      uzbLocation,
-      uzbPerformedBy,
-
-      jzbLocation,
-      jzbPerformedBy,
-      nbuStatus,
-     /// doorSystem,
-     /// power25kV,
-      topSpeedAllowed,
-      doorControlStatus,
-      powerSupplyStatus,
-      highSpeedCarsStatus,
+      trainName,                      // 0
+      trainNumber,                    // 1
+      maxSpeed,                       // 2
+      trainLength,                    // 3
+      trainCars.toString(),           // 4
+      trainWheels,                    // 5
+      brakeTypeD,                     // 6
+      brakeTypeK,                     // 7
+      brakeMode,                      // 8
+      brakingModeP,                   // 9
+      brakingModeR,                   // 10
+      brakingModeRMg,                 // 11
+      brakePercent,                   // 12
+      brakingPercentageActual,        // 13
+      brakingPercentageRequired,      // 14
+      brakingPercentageMissing,       // 15
+      activeVehiclesCount.toString(), // 16
+      transportVehiclesCount.toString(), // 17
+      totalVehiclesCount.toString(),     // 18
+      activeVehiclesWeight.toString(),   // 19
+      transportVehiclesWeight.toString(),// 20
+      totalVehiclesWeight.toString(),    // 21
+      departureStation,                // 22
+      currentStation,                  // 23
+      destinationStation,              // 24
+      uzbLocation,                     // 25
+      uzbPerformedBy,                  // 26
+      jzbLocation,                     // 27
+      jzbPerformedBy,                  // 28
+      nbuStatus,                       // 29
+      topSpeedAllowed,                 // 30
+      doorControlStatus,               // 31
+      powerSupplyStatus,               // 32
+      highSpeedCarsStatus,             // 33
     ];
   }
 
@@ -136,38 +128,36 @@ class ReportData {
       trainNumber: row[1],
       maxSpeed: row[2],
       trainLength: row[3],
-      trainCars: int.parse(row[4]),
-      brakeTypeD: row[5],
-      brakeTypeK: row[6],
-      brakeMode: row[7],
-      brakingModeP: row[8],
-      brakingModeR: row[9],
-      brakingModeRMg: row[10],
-      brakePercent: row[11],
-      brakingPercentageActual: row[12],
-      brakingPercentageRequired: row[13],
-      brakingPercentageMissing: row[14],
-      activeVehiclesCount: int.parse(row[15]),
-      transportVehiclesCount: int.parse(row[16]),
-      totalVehiclesCount: int.parse(row[17]),
-      activeVehiclesWeight: double.parse(row[18]),
-      transportVehiclesWeight: double.parse(row[19]),
-      totalVehiclesWeight: double.parse(row[20]),
-      departureStation: row[21],
-      currentStation: row[22],
-      destinationStation: row[23],
-
+      trainCars: int.tryParse(row[4]) ?? 0,
+      trainWheels: row[5],
+      brakeTypeD: row[6],
+      brakeTypeK: row[7],
+      brakeMode: row[8],
+      brakingModeP: row[9],
+      brakingModeR: row[10],
+      brakingModeRMg: row[11],
+      brakePercent: row[12],
+      brakingPercentageActual: row[13],
+      brakingPercentageRequired: row[14],
+      brakingPercentageMissing: row[15],
+      activeVehiclesCount: int.tryParse(row[16]) ?? 0,
+      transportVehiclesCount: int.tryParse(row[17]) ?? 0,
+      totalVehiclesCount: int.tryParse(row[18]) ?? 0,
+      activeVehiclesWeight: double.tryParse(row[19]) ?? 0.0,
+      transportVehiclesWeight: double.tryParse(row[20]) ?? 0.0,
+      totalVehiclesWeight: double.tryParse(row[21]) ?? 0.0,
+      departureStation: row[22],
+      currentStation: row[23],
+      destinationStation: row[24],
       uzbLocation: row[25],
       uzbPerformedBy: row[26],
-
-      jzbLocation: row[28],
-      jzbPerformedBy: row[29],
-      nbuStatus: row[30],
-
-      topSpeedAllowed: row[31],
-      doorControlStatus: row[32],
-      powerSupplyStatus: row[33],
-      highSpeedCarsStatus: row[34],
+      jzbLocation: row[27],
+      jzbPerformedBy: row[28],
+      nbuStatus: row[29],
+      topSpeedAllowed: row[30],
+      doorControlStatus: row[31],
+      powerSupplyStatus: row[32],
+      highSpeedCarsStatus: row[33],
     );
   }
 }
