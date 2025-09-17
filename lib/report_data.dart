@@ -81,83 +81,100 @@ class ReportData {
     required this.highSpeedCarsStatus,
   });
 
-  // Export do CSV (sloupce musí sedět s fromCsvRow)
+  // export do řádku CSV
   List<String> toCsvRow() {
     return [
-      trainName,                      // 0
-      trainNumber,                    // 1
-      maxSpeed,                       // 2
-      trainLength,                    // 3
-      trainCars.toString(),           // 4
-      trainWheels,                    // 5
-      brakeTypeD,                     // 6
-      brakeTypeK,                     // 7
-      brakeMode,                      // 8
-      brakingModeP,                   // 9
-      brakingModeR,                   // 10
-      brakingModeRMg,                 // 11
-      brakePercent,                   // 12
-      brakingPercentageActual,        // 13
-      brakingPercentageRequired,      // 14
-      brakingPercentageMissing,       // 15
-      activeVehiclesCount.toString(), // 16
-      transportVehiclesCount.toString(), // 17
-      totalVehiclesCount.toString(),     // 18
-      activeVehiclesWeight.toString(),   // 19
-      transportVehiclesWeight.toString(),// 20
-      totalVehiclesWeight.toString(),    // 21
-      departureStation,                // 22
-      currentStation,                  // 23
-      destinationStation,              // 24
-      uzbLocation,                     // 25
-      uzbPerformedBy,                  // 26
-      jzbLocation,                     // 27
-      jzbPerformedBy,                  // 28
-      nbuStatus,                       // 29
-      topSpeedAllowed,                 // 30
-      doorControlStatus,               // 31
-      powerSupplyStatus,               // 32
-      highSpeedCarsStatus,             // 33
+      trainName,
+      trainNumber,
+      maxSpeed,
+      trainLength,
+      trainCars.toString(),
+      trainWheels,
+      brakeTypeD,
+      brakeTypeK,
+      brakeMode,
+      brakingModeP,
+      brakingModeR,
+      brakingModeRMg,
+      brakePercent,
+      brakingPercentageActual,
+      brakingPercentageRequired,
+      brakingPercentageMissing,
+      activeVehiclesCount.toString(),
+      transportVehiclesCount.toString(),
+      totalVehiclesCount.toString(),
+      activeVehiclesWeight.toString(),
+      transportVehiclesWeight.toString(),
+      totalVehiclesWeight.toString(),
+      departureStation,
+      currentStation,
+      destinationStation,
+      uzbLocation,
+      uzbPerformedBy,
+      jzbLocation,
+      jzbPerformedBy,
+      nbuStatus,
+      doorControlStatus,
+      powerSupplyStatus,
+      highSpeedCarsStatus,
+      topSpeedAllowed,
     ];
   }
 
-  // Import z CSV
+// import z řádku CSV
   factory ReportData.fromCsvRow(List<String> row) {
+    String safe(int i) => (i < row.length) ? row[i] : '';
+    int safeInt(int i) => int.tryParse(safe(i)) ?? 0;
+    double safeDouble(int i) => double.tryParse(safe(i)) ?? 0.0;
+
     return ReportData(
-      trainName: row[0],
-      trainNumber: row[1],
-      maxSpeed: row[2],
-      trainLength: row[3],
-      trainCars: int.tryParse(row[4]) ?? 0,
-      trainWheels: row[5],
-      brakeTypeD: row[6],
-      brakeTypeK: row[7],
-      brakeMode: row[8],
-      brakingModeP: row[9],
-      brakingModeR: row[10],
-      brakingModeRMg: row[11],
-      brakePercent: row[12],
-      brakingPercentageActual: row[13],
-      brakingPercentageRequired: row[14],
-      brakingPercentageMissing: row[15],
-      activeVehiclesCount: int.tryParse(row[16]) ?? 0,
-      transportVehiclesCount: int.tryParse(row[17]) ?? 0,
-      totalVehiclesCount: int.tryParse(row[18]) ?? 0,
-      activeVehiclesWeight: double.tryParse(row[19]) ?? 0.0,
-      transportVehiclesWeight: double.tryParse(row[20]) ?? 0.0,
-      totalVehiclesWeight: double.tryParse(row[21]) ?? 0.0,
-      departureStation: row[22],
-      currentStation: row[23],
-      destinationStation: row[24],
-      uzbLocation: row[25],
-      uzbPerformedBy: row[26],
-      jzbLocation: row[27],
-      jzbPerformedBy: row[28],
-      nbuStatus: row[29],
-      topSpeedAllowed: row[30],
-      doorControlStatus: row[31],
-      powerSupplyStatus: row[32],
-      highSpeedCarsStatus: row[33],
+      trainName: safe(0),
+      trainNumber: safe(1),
+      maxSpeed: safe(2),
+      trainLength: safe(3),
+      trainCars: safeInt(4),
+      trainWheels: safe(5),
+      brakeTypeD: safe(6),
+      brakeTypeK: safe(7),
+      brakeMode: safe(8),
+      brakingModeP: safe(9),
+      brakingModeR: safe(10),
+      brakingModeRMg: safe(11),
+      brakePercent: safe(12),
+      brakingPercentageActual: safe(13),
+      brakingPercentageRequired: safe(14),
+      brakingPercentageMissing: safe(15),
+      activeVehiclesCount: safeInt(16),
+      transportVehiclesCount: safeInt(17),
+      totalVehiclesCount: safeInt(18),
+      activeVehiclesWeight: safeDouble(19),
+      transportVehiclesWeight: safeDouble(20),
+      totalVehiclesWeight: safeDouble(21),
+      departureStation: safe(22),
+      currentStation: safe(23),
+      destinationStation: safe(24),
+      uzbLocation: safe(25),
+      uzbPerformedBy: safe(26),
+      jzbLocation: safe(27),
+      jzbPerformedBy: safe(28),
+      nbuStatus: safe(29),
+      doorControlStatus: safe(30),
+      powerSupplyStatus: safe(31),
+      highSpeedCarsStatus: safe(32),
+      topSpeedAllowed: safe(33),
     );
+  }
+
+  static List<String> csvHeader() {
+    return [
+      'trainName','trainNumber','maxSpeed','trainLength','trainCars','trainWheels',
+      'brakeTypeD','brakeTypeK','brakeMode','brakingModeP','brakingModeR','brakingModeRMg',
+      'brakePercent','brakingPercentageActual','brakingPercentageRequired','brakingPercentageMissing',
+      'activeVehiclesCount','transportVehiclesCount','totalVehiclesCount',
+      'activeVehiclesWeight','transportVehiclesWeight','totalVehiclesWeight',
+      'departureStation','currentStation','destinationStation',
+      'uzbLocation','uzbPerformedBy','jzbLocation','jzbPerformedBy',
+      'nbuStatus','doorControlStatus','powerSupplyStatus','highSpeedCarsStatus','topSpeedAllowed'
+    ];
   }
 }
