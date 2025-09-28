@@ -3,6 +3,9 @@ import 'package:file_picker/file_picker.dart';
 import 'report_page.dart';
 import 'report_data.dart';
 import 'storage_service.dart';
+import 'train_edit_list_page.dart';
+import 'dart:io';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class TrainSelectionPage extends StatefulWidget {
   const TrainSelectionPage({super.key});
@@ -13,11 +16,20 @@ class TrainSelectionPage extends StatefulWidget {
 
 class _TrainSelectionPageState extends State<TrainSelectionPage> {
   List<ReportData> trains = [];
+  String _appVersion = "";
 
   @override
   void initState() {
     super.initState();
     _loadTrains();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = "${info.version}+${info.buildNumber}";
+    });
   }
 
   Future<void> _loadTrains() async {
@@ -33,7 +45,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
         trainName: "Os10542",
         trainNumber: "10542",
         maxSpeed: "80",
-        trainLength: "53",
+        trainLength: "54",
         trainWheels: "12n",
         trainCars: 3,
         brakeTypeD: "0",
@@ -102,52 +114,74 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text(
-          "Výběr vlaku",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text("Výběr vlaku ${_appVersion.isNotEmpty ? "($_appVersion)" : ""}"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download, color: Colors.white),
-            tooltip: "Importovat vlaky",
+            icon: const Icon(Icons.download),
             onPressed: _importTrains,
           ),
           IconButton(
-            icon: const Icon(Icons.upload_file, color: Colors.white),
-            tooltip: "Exportovat vlaky do Downloads",
+            icon: const Icon(Icons.upload_file),
             onPressed: _exportTrains,
           ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: trains.length,
-        itemBuilder: (context, index) {
-          final train = trains[index];
-          return Card(
-            color: const Color(0xFF1E1E1E),
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: ListTile(
-              title: Text(
-                "${train.trainName} (${train.trainNumber})",
-                style: const TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                "Rychlost: ${train.maxSpeed} km/h",
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
-              onTap: () {
+          if (Platform.isWindows || Platform.isLinux)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: "Editor vlaků",
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportPage(data: train),
+                    builder: (context) => TrainEditListPage(trains: trains),
+                  ),
+                ).then((_) => _loadTrains());
+              },
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: trains.length,
+              itemBuilder: (context, index) {
+                final train = trains[index];
+                return Card(
+                  color: const Color(0xFF1E1E1E),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    title: Text(
+                      "${train.trainName} (${train.trainNumber})",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      "Rychlost: ${train.maxSpeed} km/h",
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportPage(data: train),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              "Autor: Matěj — Verze: ${_appVersion.isNotEmpty ? _appVersion : 'Načítám...'}",
+              style: const TextStyle(color: Colors.white60, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }

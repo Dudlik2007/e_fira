@@ -121,7 +121,7 @@ class ReportData {
     ];
   }
 
-// import z řádku CSV
+  // import z řádku CSV
   factory ReportData.fromCsvRow(List<String> row) {
     String safe(int i) => (i < row.length) ? row[i] : '';
     int safeInt(int i) => int.tryParse(safe(i)) ?? 0;
@@ -176,5 +176,80 @@ class ReportData {
       'uzbLocation','uzbPerformedBy','jzbLocation','jzbPerformedBy',
       'nbuStatus','doorControlStatus','powerSupplyStatus','highSpeedCarsStatus','topSpeedAllowed'
     ];
+  }
+
+  // copyWith pro úpravy všech hodnot
+  ReportData copyWith({
+    String? trainName,
+    String? trainNumber,
+    String? maxSpeed,
+    String? trainLength,
+    int? trainCars,
+    String? trainWheels,
+    String? brakeTypeD,
+    String? brakeTypeK,
+    String? brakeMode,
+    String? brakingModeP,
+    String? brakingModeR,
+    String? brakingModeRMg,
+    String? brakePercent,
+    String? brakingPercentageActual,
+    String? brakingPercentageRequired,
+    String? brakingPercentageMissing,
+    int? activeVehiclesCount,
+    int? transportVehiclesCount,
+    int? totalVehiclesCount,
+    double? activeVehiclesWeight,
+    double? transportVehiclesWeight,
+    double? totalVehiclesWeight,
+    String? departureStation,
+    String? currentStation,
+    String? destinationStation,
+    String? uzbLocation,
+    String? uzbPerformedBy,
+    String? jzbLocation,
+    String? jzbPerformedBy,
+    String? nbuStatus,
+    String? topSpeedAllowed,
+    String? doorControlStatus,
+    String? powerSupplyStatus,
+    String? highSpeedCarsStatus,
+  }) {
+    return ReportData(
+      trainName: trainName ?? this.trainName,
+      trainNumber: trainNumber ?? this.trainNumber,
+      maxSpeed: maxSpeed ?? this.maxSpeed,
+      trainLength: trainLength ?? this.trainLength,
+      trainCars: trainCars ?? this.trainCars,
+      trainWheels: trainWheels ?? this.trainWheels,
+      brakeTypeD: brakeTypeD ?? this.brakeTypeD,
+      brakeTypeK: brakeTypeK ?? this.brakeTypeK,
+      brakeMode: brakeMode ?? this.brakeMode,
+      brakingModeP: brakingModeP ?? this.brakingModeP,
+      brakingModeR: brakingModeR ?? this.brakingModeR,
+      brakingModeRMg: brakingModeRMg ?? this.brakingModeRMg,
+      brakePercent: brakePercent ?? this.brakePercent,
+      brakingPercentageActual: brakingPercentageActual ?? this.brakingPercentageActual,
+      brakingPercentageRequired: brakingPercentageRequired ?? this.brakingPercentageRequired,
+      brakingPercentageMissing: brakingPercentageMissing ?? this.brakingPercentageMissing,
+      activeVehiclesCount: activeVehiclesCount ?? this.activeVehiclesCount,
+      transportVehiclesCount: transportVehiclesCount ?? this.transportVehiclesCount,
+      totalVehiclesCount: totalVehiclesCount ?? this.totalVehiclesCount,
+      activeVehiclesWeight: activeVehiclesWeight ?? this.activeVehiclesWeight,
+      transportVehiclesWeight: transportVehiclesWeight ?? this.transportVehiclesWeight,
+      totalVehiclesWeight: totalVehiclesWeight ?? this.totalVehiclesWeight,
+      departureStation: departureStation ?? this.departureStation,
+      currentStation: currentStation ?? this.currentStation,
+      destinationStation: destinationStation ?? this.destinationStation,
+      uzbLocation: uzbLocation ?? this.uzbLocation,
+      uzbPerformedBy: uzbPerformedBy ?? this.uzbPerformedBy,
+      jzbLocation: jzbLocation ?? this.jzbLocation,
+      jzbPerformedBy: jzbPerformedBy ?? this.jzbPerformedBy,
+      nbuStatus: nbuStatus ?? this.nbuStatus,
+      topSpeedAllowed: topSpeedAllowed ?? this.topSpeedAllowed,
+      doorControlStatus: doorControlStatus ?? this.doorControlStatus,
+      powerSupplyStatus: powerSupplyStatus ?? this.powerSupplyStatus,
+      highSpeedCarsStatus: highSpeedCarsStatus ?? this.highSpeedCarsStatus,
+    );
   }
 }
