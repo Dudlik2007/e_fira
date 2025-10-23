@@ -26,10 +26,9 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
   }
 
   void _save() {
-    if (_formKey.currentState!.validate()) {
-      widget.onSave(_edited);
-      Navigator.pop(context);
-    }
+    // už žádné volání validate(), protože žádné pole není povinné
+    widget.onSave(_edited);
+    Navigator.pop(context);
   }
 
   Widget _buildField({
@@ -53,7 +52,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
           ),
         ),
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        validator: (v) => (v == null || v.isEmpty) ? "Vyplň $label" : null,
+        // žádná validace -> vše volitelné
         onChanged: onChanged,
       ),
     );
@@ -82,29 +81,25 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             _buildField(
               label: "Název vlaku",
               initial: _edited.trainName,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(trainName: v),
+              onChanged: (v) => _edited = _edited.copyWith(trainName: v),
             ),
             _buildField(
               label: "Číslo vlaku",
               initial: _edited.trainNumber,
               isNumber: true,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(trainNumber: v),
+              onChanged: (v) => _edited = _edited.copyWith(trainNumber: v),
             ),
             _buildField(
               label: "Maximální rychlost",
               initial: _edited.maxSpeed,
               isNumber: true,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(maxSpeed: v),
+              onChanged: (v) => _edited = _edited.copyWith(maxSpeed: v),
             ),
             _buildField(
               label: "Délka vlaku",
               initial: _edited.trainLength,
               isNumber: true,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(trainLength: v),
+              onChanged: (v) => _edited = _edited.copyWith(trainLength: v),
             ),
             _buildField(
               label: "Počet vozů",
@@ -116,53 +111,46 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             _buildField(
               label: "Kola",
               initial: _edited.trainWheels,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(trainWheels: v),
+              onChanged: (v) => _edited = _edited.copyWith(trainWheels: v),
             ),
 
             const SizedBox(height: 12),
-            const Text("Brzdy", style: TextStyle(color: Colors.white, fontSize: 18)),
+            const Text("Brzdy",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
               label: "Typ brzdy D",
               initial: _edited.brakeTypeD,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakeTypeD: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakeTypeD: v),
             ),
             _buildField(
               label: "Typ brzdy K",
               initial: _edited.brakeTypeK,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakeTypeK: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakeTypeK: v),
             ),
             _buildField(
               label: "Režim brzdy",
               initial: _edited.brakeMode,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakeMode: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakeMode: v),
             ),
             _buildField(
               label: "Brzd. režim P",
               initial: _edited.brakingModeP,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakingModeP: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakingModeP: v),
             ),
             _buildField(
               label: "Brzd. režim R",
               initial: _edited.brakingModeR,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakingModeR: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakingModeR: v),
             ),
             _buildField(
               label: "Brzd. režim R+Mg",
               initial: _edited.brakingModeRMg,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakingModeRMg: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakingModeRMg: v),
             ),
             _buildField(
               label: "Brzdicí %",
               initial: _edited.brakePercent,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(brakePercent: v),
+              onChanged: (v) => _edited = _edited.copyWith(brakePercent: v),
             ),
             _buildField(
               label: "Skutečné % brzdění",
@@ -184,7 +172,8 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             ),
 
             const SizedBox(height: 12),
-            const Text("Stanice", style: TextStyle(color: Colors.white, fontSize: 18)),
+            const Text("Stanice",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
               label: "Výchozí stanice",
               initial: _edited.departureStation,
@@ -194,8 +183,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             _buildField(
               label: "Aktuální stanice",
               initial: _edited.currentStation,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(currentStation: v),
+              onChanged: (v) => _edited = _edited.copyWith(currentStation: v),
             ),
             _buildField(
               label: "Cílová stanice",
@@ -205,39 +193,36 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             ),
 
             const SizedBox(height: 12),
-            const Text("UZB / JZB", style: TextStyle(color: Colors.white, fontSize: 18)),
+            const Text("UZB / JZB",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
               label: "Místo UZB",
               initial: _edited.uzbLocation,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(uzbLocation: v),
+              onChanged: (v) => _edited = _edited.copyWith(uzbLocation: v),
             ),
             _buildField(
               label: "Provedl UZB",
               initial: _edited.uzbPerformedBy,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(uzbPerformedBy: v),
+              onChanged: (v) => _edited = _edited.copyWith(uzbPerformedBy: v),
             ),
             _buildField(
               label: "Místo JZB",
               initial: _edited.jzbLocation,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(jzbLocation: v),
+              onChanged: (v) => _edited = _edited.copyWith(jzbLocation: v),
             ),
             _buildField(
               label: "Provedl JZB",
               initial: _edited.jzbPerformedBy,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(jzbPerformedBy: v),
+              onChanged: (v) => _edited = _edited.copyWith(jzbPerformedBy: v),
             ),
 
             const SizedBox(height: 12),
-            const Text("Systémy", style: TextStyle(color: Colors.white, fontSize: 18)),
+            const Text("Systémy",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
               label: "NBÜ stav",
               initial: _edited.nbuStatus,
-              onChanged: (v) =>
-              _edited = _edited.copyWith(nbuStatus: v),
+              onChanged: (v) => _edited = _edited.copyWith(nbuStatus: v),
             ),
             _buildField(
               label: "Max. povolená rychlost",

@@ -114,16 +114,17 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: Text("Výběr vlaku ${_appVersion.isNotEmpty ? "($_appVersion)" : ""}"),
+        title: Text("Výběr vlaku:"),
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: _importTrains,
           ),
-          IconButton(
-            icon: const Icon(Icons.upload_file),
-            onPressed: _exportTrains,
-          ),
+          if (Platform.isWindows || Platform.isLinux)
+            IconButton(
+              icon: const Icon(Icons.upload_file),
+              onPressed: _exportTrains,
+            ),
           if (Platform.isWindows || Platform.isLinux)
             IconButton(
               icon: const Icon(Icons.edit),
