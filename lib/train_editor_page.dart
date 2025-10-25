@@ -118,7 +118,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             const Text("Brzdy",
                 style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
-              label: "Typ brzdy D",
+              label: "Typ brzdy D ",
               initial: _edited.brakeTypeD,
               onChanged: (v) => _edited = _edited.copyWith(brakeTypeD: v),
             ),
@@ -128,22 +128,22 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               onChanged: (v) => _edited = _edited.copyWith(brakeTypeK: v),
             ),
             _buildField(
-              label: "Režim brzdy",
+              label: "Režim brzdy (P; R; R+Mg)",
               initial: _edited.brakeMode,
               onChanged: (v) => _edited = _edited.copyWith(brakeMode: v),
             ),
             _buildField(
-              label: "Brzd. režim P",
+              label: "Brzdný režim P -Počet",
               initial: _edited.brakingModeP,
               onChanged: (v) => _edited = _edited.copyWith(brakingModeP: v),
             ),
             _buildField(
-              label: "Brzd. režim R",
+              label: "Brzdný režim R -Počet",
               initial: _edited.brakingModeR,
               onChanged: (v) => _edited = _edited.copyWith(brakingModeR: v),
             ),
             _buildField(
-              label: "Brzd. režim R+Mg",
+              label: "Brzdný režim R+Mg -Počet",
               initial: _edited.brakingModeRMg,
               onChanged: (v) => _edited = _edited.copyWith(brakingModeRMg: v),
             ),
@@ -153,19 +153,19 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               onChanged: (v) => _edited = _edited.copyWith(brakePercent: v),
             ),
             _buildField(
-              label: "Skutečné % brzdění",
+              label: "skut. Brzd. %",
               initial: _edited.brakingPercentageActual,
               onChanged: (v) =>
               _edited = _edited.copyWith(brakingPercentageActual: v),
             ),
             _buildField(
-              label: "Požadované % brzdění",
+              label: "Pož. Brzd. %",
               initial: _edited.brakingPercentageRequired,
               onChanged: (v) =>
               _edited = _edited.copyWith(brakingPercentageRequired: v),
             ),
             _buildField(
-              label: "Chybějící % brzdění",
+              label: "Chyb. Brzd. %",
               initial: _edited.brakingPercentageMissing,
               onChanged: (v) =>
               _edited = _edited.copyWith(brakingPercentageMissing: v),
@@ -244,7 +244,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               _edited = _edited.copyWith(powerSupplyStatus: v),
             ),
             _buildField(
-              label: "Vozy pro vyšší rychlost",
+              label: "Horní rychlostníky",
               initial: _edited.highSpeedCarsStatus,
               onChanged: (v) =>
               _edited = _edited.copyWith(highSpeedCarsStatus: v),

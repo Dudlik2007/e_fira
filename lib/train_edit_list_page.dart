@@ -26,6 +26,15 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
     await StorageService.saveTrains(_trains);
   }
 
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _editTrain(int index) async {
     await Navigator.push(
       context,
@@ -37,6 +46,7 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
               _trains[index] = updated;
             });
             _saveTrains();
+            _showMessage("Změny byly uloženy");
           },
         ),
       ),
@@ -44,10 +54,34 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
   }
 
   void _deleteTrain(int index) async {
-    setState(() {
-      _trains.removeAt(index);
-    });
-    await _saveTrains();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Smazat vlak?"),
+        content: const Text("Opravdu chcete tento vlak odstranit?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Zrušit"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Smazat",
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() {
+        _trains.removeAt(index);
+      });
+      await _saveTrains();
+      _showMessage("Vlak byl smazán");
+    }
   }
 
   void _addTrain() async {
@@ -98,6 +132,7 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
               _trains.add(created);
             });
             _saveTrains();
+            _showMessage("Nový vlak byl přidán");
           },
         ),
       ),
@@ -110,25 +145,36 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: const Text("Editor vlaků"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: "Přidat vlak",
-            onPressed: _addTrain,
-          ),
-        ],
+        backgroundColor: const Color(0xFF1E1E1E),
+        centerTitle: true,
       ),
-      body: ListView.builder(
+      body: _trains.isEmpty
+          ? const Center(
+        child: Text(
+          "Žádné vlaky k zobrazení",
+          style: TextStyle(color: Colors.white70, fontSize: 16),
+        ),
+      )
+          : ListView.builder(
         itemCount: _trains.length,
         itemBuilder: (context, index) {
           final train = _trains[index];
           return Card(
             color: const Color(0xFF1E1E1E),
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 10),
               title: Text(
                 "${train.trainName} (${train.trainNumber})",
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               subtitle: Text(
                 "Rychlost: ${train.maxSpeed} km/h",
@@ -142,6 +188,12 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTrain,
+        tooltip: 'Přidat vlak',
+        backgroundColor: Colors.blueAccent,
+        child: const Icon(Icons.add),
       ),
     );
   }

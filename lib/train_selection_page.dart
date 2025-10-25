@@ -16,7 +16,9 @@ class TrainSelectionPage extends StatefulWidget {
 
 class _TrainSelectionPageState extends State<TrainSelectionPage> {
   List<ReportData> trains = [];
+  List<ReportData> filteredTrains = [];
   String _appVersion = "";
+  String _filter = "";
 
   @override
   void initState() {
@@ -34,8 +36,10 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
 
   Future<void> _loadTrains() async {
     final loaded = await StorageService.loadTrains();
+    final list = loaded.isNotEmpty ? loaded : _demoTrains();
     setState(() {
-      trains = loaded.isNotEmpty ? loaded : _demoTrains();
+      trains = list;
+      filteredTrains = list;
     });
   }
 
@@ -69,15 +73,24 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
         destinationStation: "Štěchovice",
         uzbLocation: "Albrechtice nad Vltavou",
         uzbPerformedBy: "Vozmistr",
-        jzbLocation: "",
-        jzbPerformedBy: "",
         nbuStatus: "NBÜ",
         topSpeedAllowed: "80",
         doorControlStatus: "TB 0",
         powerSupplyStatus: "---",
-        highSpeedCarsStatus: "ANO",
+        highSpeedCarsStatus: "ANO", jzbLocation: '', jzbPerformedBy: '',
       ),
     ];
+  }
+
+  void _applyFilter(String query) {
+    setState(() {
+      _filter = query;
+      filteredTrains = trains
+          .where((t) =>
+      t.trainName.toLowerCase().contains(query.toLowerCase()) ||
+          t.trainNumber.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
 
   Future<void> _exportTrains() async {
@@ -96,10 +109,12 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     );
 
     if (result != null && result.files.single.path != null) {
-      final imported = await StorageService.importFromFile(result.files.single.path!);
+      final imported =
+      await StorageService.importFromFile(result.files.single.path!);
       if (imported.isNotEmpty) {
         setState(() {
           trains = imported;
+          filteredTrains = imported;
         });
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -114,15 +129,19 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: Text("Výběr vlaku:"),
+        backgroundColor: const Color(0xFF1E1E1E),
+        foregroundColor: Colors.white, // ikony i text AppBaru budou světlé
+        title: const Text("Výběr vlaku"),
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
+            tooltip: "Importovat vlaky",
             onPressed: _importTrains,
           ),
           if (Platform.isWindows || Platform.isLinux)
             IconButton(
               icon: const Icon(Icons.upload_file),
+              tooltip: "Exportovat vlaky",
               onPressed: _exportTrains,
             ),
           if (Platform.isWindows || Platform.isLinux)
@@ -142,14 +161,36 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
       ),
       body: Column(
         children: [
+          // 🔍 Filtrovací pole
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Filtrovat podle názvu nebo čísla vlaku...",
+                hintStyle: const TextStyle(color: Colors.white60),
+                filled: true,
+                fillColor: const Color(0xFF1E1E1E),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: _applyFilter,
+            ),
+          ),
+
+          // 🧾 Seznam vlaků
           Expanded(
             child: ListView.builder(
-              itemCount: trains.length,
+              itemCount: filteredTrains.length,
               itemBuilder: (context, index) {
-                final train = trains[index];
+                final train = filteredTrains[index];
                 return Card(
                   color: const Color(0xFF1E1E1E),
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  margin:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: ListTile(
                     title: Text(
                       "${train.trainName} (${train.trainNumber})",
@@ -159,7 +200,8 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                       "Rychlost: ${train.maxSpeed} km/h",
                       style: const TextStyle(color: Colors.white70),
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                    trailing: const Icon(Icons.arrow_forward_ios,
+                        color: Colors.white70, size: 16),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -173,6 +215,8 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
               },
             ),
           ),
+
+          // 📦 Informace o verzi
           const SizedBox(height: 8),
           Center(
             child: Text(
