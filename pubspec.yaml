@@ -42,7 +42,9 @@ dependencies:
   path_provider: ^2.1.5
   package_info_plus: ^9.0.0
   flutter_launcher_icons: "^0.14.4"
+  shared_preferences: ^2.5.3
 
+  http: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

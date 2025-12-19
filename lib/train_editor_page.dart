@@ -96,7 +96,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               onChanged: (v) => _edited = _edited.copyWith(maxSpeed: v),
             ),
             _buildField(
-              label: "Délka vlaku",
+              label: "Délka vlaku (m)",
               initial: _edited.trainLength,
               isNumber: true,
               onChanged: (v) => _edited = _edited.copyWith(trainLength: v),
@@ -109,21 +109,27 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               _edited = _edited.copyWith(trainCars: int.tryParse(v) ?? 0),
             ),
             _buildField(
-              label: "Kola",
+              label: "Počet náprav",
               initial: _edited.trainWheels,
+              isNumber: true,
               onChanged: (v) => _edited = _edited.copyWith(trainWheels: v),
+            ),
+             _buildField(
+              label: "Název souboru TJŘ",
+              initial: _edited.tjrFileName ?? '',
+              onChanged: (v) => _edited = _edited.copyWith(tjrFileName: v),
             ),
 
             const SizedBox(height: 12),
             const Text("Brzdy",
                 style: TextStyle(color: Colors.white, fontSize: 18)),
             _buildField(
-              label: "Typ brzdy D ",
+              label: "Typ brzdy D - Počet",
               initial: _edited.brakeTypeD,
               onChanged: (v) => _edited = _edited.copyWith(brakeTypeD: v),
             ),
             _buildField(
-              label: "Typ brzdy K",
+              label: "Typ brzdy K - Počet",
               initial: _edited.brakeTypeK,
               onChanged: (v) => _edited = _edited.copyWith(brakeTypeK: v),
             ),
@@ -170,6 +176,46 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
               onChanged: (v) =>
               _edited = _edited.copyWith(brakingPercentageMissing: v),
             ),
+
+            const SizedBox(height: 12),
+            const Text("Vozidla a Hmotnosti",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
+            _buildField(
+                label: "Počet činných vozidel",
+                initial: _edited.activeVehiclesCount.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited =
+                    _edited.copyWith(activeVehiclesCount: int.tryParse(v) ?? 0)),
+            _buildField(
+                label: "Počet doprovodných vozidel",
+                initial: _edited.transportVehiclesCount.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited = _edited.copyWith(
+                    transportVehiclesCount: int.tryParse(v) ?? 0)),
+            _buildField(
+                label: "Počet vozidel celkem",
+                initial: _edited.totalVehiclesCount.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited =
+                    _edited.copyWith(totalVehiclesCount: int.tryParse(v) ?? 0)),
+            _buildField(
+                label: "Hmotnost činných vozidel (t)",
+                initial: _edited.activeVehiclesWeight.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited = _edited.copyWith(
+                    activeVehiclesWeight: double.tryParse(v) ?? 0.0)),
+            _buildField(
+                label: "Hmotnost doprovodných vozidel (t)",
+                initial: _edited.transportVehiclesWeight.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited = _edited.copyWith(
+                    transportVehiclesWeight: double.tryParse(v) ?? 0.0)),
+            _buildField(
+                label: "Hmotnost vozidel celkem (t)",
+                initial: _edited.totalVehiclesWeight.toString(),
+                isNumber: true,
+                onChanged: (v) => _edited = _edited.copyWith(
+                    totalVehiclesWeight: double.tryParse(v) ?? 0.0)),
 
             const SizedBox(height: 12),
             const Text("Stanice",

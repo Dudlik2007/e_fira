@@ -1,9 +1,13 @@
+// file: C:/Users/admin/StudioProjects/e_fira/lib/train_selection_page.dart. 
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'report_page.dart';
 import 'report_data.dart';
 import 'storage_service.dart';
 import 'train_edit_list_page.dart';
+import 'train_tjr_view_page.dart';
+import 'web_loader.dart'; // Ujisti se, že importuješ web_loader.dart
 import 'dart:io';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -23,7 +27,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
   @override
   void initState() {
     super.initState();
-    _loadTrains();
+    _loadTrains(); // Načte vlaky při prvním spuštění
     _loadAppVersion();
   }
 
@@ -34,68 +38,31 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     });
   }
 
+  /// Načítá vlaky ze StorageService a aktualizuje stav.
+  /// Mělo by být voláno vždy, když chceme načíst aktuální data.
   Future<void> _loadTrains() async {
     final loaded = await StorageService.loadTrains();
-    final list = loaded.isNotEmpty ? loaded : _demoTrains();
-    setState(() {
-      trains = list;
-      filteredTrains = list;
-    });
-  }
 
-  List<ReportData> _demoTrains() {
-    return [
-      ReportData(
-        trainName: "Os10542",
-        trainNumber: "10542",
-        maxSpeed: "80",
-        trainLength: "54",
-        trainWheels: "12n",
-        trainCars: 3,
-        brakeTypeD: "0",
-        brakeTypeK: "0",
-        brakeMode: "P",
-        brakingModeP: "3",
-        brakingModeR: "0",
-        brakingModeRMg: "0",
-        brakePercent: "90",
-        brakingPercentageActual: "90",
-        brakingPercentageRequired: "90",
-        brakingPercentageMissing: "0",
-        activeVehiclesCount: 1,
-        transportVehiclesCount: 2,
-        totalVehiclesCount: 3,
-        activeVehiclesWeight: 71.0,
-        transportVehiclesWeight: 68.0,
-        totalVehiclesWeight: 139.0,
-        departureStation: "Albrechtice nad Vltavou",
-        currentStation: "Albrechtice nad Vltavou",
-        destinationStation: "Štěchovice",
-        uzbLocation: "Albrechtice nad Vltavou",
-        uzbPerformedBy: "Vozmistr",
-        nbuStatus: "NBÜ",
-        topSpeedAllowed: "80",
-        doorControlStatus: "TB 0",
-        powerSupplyStatus: "---",
-        highSpeedCarsStatus: "ANO", jzbLocation: '', jzbPerformedBy: '',
-      ),
-    ];
+    setState(() {
+      trains = loaded;
+      _applyFilter(_filter); // Znovu aplikuje filtr na nově načtená data
+    });
   }
 
   void _applyFilter(String query) {
     setState(() {
       _filter = query;
-      filteredTrains = trains
-          .where((t) =>
-      t.trainName.toLowerCase().contains(query.toLowerCase()) ||
-          t.trainNumber.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      filteredTrains = trains.where((t) {
+        return t.trainName.toLowerCase().contains(query.toLowerCase()) ||
+            t.trainNumber.toLowerCase().contains(query.toLowerCase());
+      }).toList();
     });
   }
 
   Future<void> _exportTrains() async {
     final path = await StorageService.exportToDownloads(trains);
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Exportováno do: $path")),
     );
@@ -111,12 +78,13 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     if (result != null && result.files.single.path != null) {
       final imported =
       await StorageService.importFromFile(result.files.single.path!);
+
       if (imported.isNotEmpty) {
         setState(() {
           trains = imported;
-          filteredTrains = imported;
+          _applyFilter(_filter); // Znovu aplikujeme filtr na importovaná data
         });
-        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Vlaky byly importovány a uloženy")),
         );
@@ -124,15 +92,41 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     }
   }
 
+  // --- ZMĚNA JE POUZE ZDE ---
+  Future<void> _navigateToWebLoader() async {
+    // Používáme push, ale tentokrát čekáme na výsledek (Future<bool?>)
+    final bool? shouldRefresh = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const WebLoaderPage()),
+    );
+
+    // Pokud je výsledek 'true', znamená to, že došlo k úspěšné synchronizaci
+    if (shouldRefresh == true) {
+      // Znovu načti vlaky, aby se zobrazily nové/aktualizované údaje
+      await _loadTrains();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Vlaky byly aktualizovány z webu")),
+        );
+      }
+    }
+  }
+  // --- KONEC ZMĚNY ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
-        foregroundColor: Colors.white, // ikony i text AppBaru budou světlé
+        foregroundColor: Colors.white,
         title: const Text("Výběr vlaku"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_sync),
+            tooltip: "Nastavení a synchronizace webu",
+            onPressed: _navigateToWebLoader, // Voláme novou metodu
+          ),
           IconButton(
             icon: const Icon(Icons.download),
             tooltip: "Importovat vlaky",
@@ -154,7 +148,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                   MaterialPageRoute(
                     builder: (context) => TrainEditListPage(trains: trains),
                   ),
-                ).then((_) => _loadTrains());
+                ).then((_) => _loadTrains()); // Editor by také měl vyvolat znovunačtení
               },
             ),
         ],
@@ -181,16 +175,22 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
             ),
           ),
 
-          // 🧾 Seznam vlaků
           Expanded(
-            child: ListView.builder(
+            child: trains.isEmpty
+                ? const Center(
+              child: Text(
+                "Nenalezeny žádné uložené vlaky",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            )
+                : ListView.builder(
               itemCount: filteredTrains.length,
               itemBuilder: (context, index) {
                 final train = filteredTrains[index];
                 return Card(
                   color: const Color(0xFF1E1E1E),
-                  margin:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
                   child: ListTile(
                     title: Text(
                       "${train.trainName} (${train.trainNumber})",
@@ -200,29 +200,53 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                       "Rychlost: ${train.maxSpeed} km/h",
                       style: const TextStyle(color: Colors.white70),
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios,
-                        color: Colors.white70, size: 16),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ReportPage(data: train),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.table_chart,
+                              color: Colors.lightBlueAccent),
+                          tooltip: "Otevřít brzděnku",
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReportPage(data: train),
+                              ),
+                            ).then((_) => _loadTrains());
+                          },
                         ),
-                      );
-                    },
+                        if (train.tjrFileName != null &&
+                            train.tjrFileName!.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.description,
+                                color: Colors.amberAccent),
+                            tooltip: "Zobrazit jízdní řád (TJŘ)",
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TrainTjrViewPage(
+                                    trainName: train.trainName,
+                                    tjrFileName: train.tjrFileName!,
+                                  ),
+                                ),
+                              ).then((_) => _loadTrains());
+                            },
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
 
-          // 📦 Informace o verzi
           const SizedBox(height: 8),
           Center(
             child: Text(
               "Autor: Matěj — Verze: ${_appVersion.isNotEmpty ? _appVersion : 'Načítám...'}",
               style: const TextStyle(color: Colors.white60, fontSize: 12),
-              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 12),

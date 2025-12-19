@@ -44,6 +44,9 @@ class ReportData {
   final String powerSupplyStatus;
   final String highSpeedCarsStatus;
 
+  // 🆕 TJŘ soubor
+  final String? tjrFileName;
+
   ReportData({
     required this.trainName,
     required this.trainNumber,
@@ -79,6 +82,7 @@ class ReportData {
     required this.doorControlStatus,
     required this.powerSupplyStatus,
     required this.highSpeedCarsStatus,
+    this.tjrFileName,
   });
 
   // export do řádku CSV
@@ -118,6 +122,7 @@ class ReportData {
       powerSupplyStatus,
       highSpeedCarsStatus,
       topSpeedAllowed,
+      tjrFileName ?? '', // 🆕 uloží se do CSV
     ];
   }
 
@@ -162,19 +167,47 @@ class ReportData {
       powerSupplyStatus: safe(31),
       highSpeedCarsStatus: safe(32),
       topSpeedAllowed: safe(33),
+      tjrFileName: safe(34), // 🆕 načte TJŘ z CSV
     );
   }
 
   static List<String> csvHeader() {
     return [
-      'trainName','trainNumber','maxSpeed','trainLength','trainCars','trainWheels',
-      'brakeTypeD','brakeTypeK','brakeMode','brakingModeP','brakingModeR','brakingModeRMg',
-      'brakePercent','brakingPercentageActual','brakingPercentageRequired','brakingPercentageMissing',
-      'activeVehiclesCount','transportVehiclesCount','totalVehiclesCount',
-      'activeVehiclesWeight','transportVehiclesWeight','totalVehiclesWeight',
-      'departureStation','currentStation','destinationStation',
-      'uzbLocation','uzbPerformedBy','jzbLocation','jzbPerformedBy',
-      'nbuStatus','doorControlStatus','powerSupplyStatus','highSpeedCarsStatus','topSpeedAllowed'
+      'trainName',
+      'trainNumber',
+      'maxSpeed',
+      'trainLength',
+      'trainCars',
+      'trainWheels',
+      'brakeTypeD',
+      'brakeTypeK',
+      'brakeMode',
+      'brakingModeP',
+      'brakingModeR',
+      'brakingModeRMg',
+      'brakePercent',
+      'brakingPercentageActual',
+      'brakingPercentageRequired',
+      'brakingPercentageMissing',
+      'activeVehiclesCount',
+      'transportVehiclesCount',
+      'totalVehiclesCount',
+      'activeVehiclesWeight',
+      'transportVehiclesWeight',
+      'totalVehiclesWeight',
+      'departureStation',
+      'currentStation',
+      'destinationStation',
+      'uzbLocation',
+      'uzbPerformedBy',
+      'jzbLocation',
+      'jzbPerformedBy',
+      'nbuStatus',
+      'doorControlStatus',
+      'powerSupplyStatus',
+      'highSpeedCarsStatus',
+      'topSpeedAllowed',
+      'tjrFileName', // 🆕 sloupec v CSV
     ];
   }
 
@@ -214,6 +247,7 @@ class ReportData {
     String? doorControlStatus,
     String? powerSupplyStatus,
     String? highSpeedCarsStatus,
+    String? tjrFileName,
   }) {
     return ReportData(
       trainName: trainName ?? this.trainName,
@@ -229,14 +263,18 @@ class ReportData {
       brakingModeR: brakingModeR ?? this.brakingModeR,
       brakingModeRMg: brakingModeRMg ?? this.brakingModeRMg,
       brakePercent: brakePercent ?? this.brakePercent,
-      brakingPercentageActual: brakingPercentageActual ?? this.brakingPercentageActual,
-      brakingPercentageRequired: brakingPercentageRequired ?? this.brakingPercentageRequired,
-      brakingPercentageMissing: brakingPercentageMissing ?? this.brakingPercentageMissing,
+      brakingPercentageActual:
+      brakingPercentageActual ?? this.brakingPercentageActual,
+      brakingPercentageRequired:
+      brakingPercentageRequired ?? this.brakingPercentageRequired,
+      brakingPercentageMissing:
+      brakingPercentageMissing ?? this.brakingPercentageMissing,
       activeVehiclesCount: activeVehiclesCount ?? this.activeVehiclesCount,
       transportVehiclesCount: transportVehiclesCount ?? this.transportVehiclesCount,
       totalVehiclesCount: totalVehiclesCount ?? this.totalVehiclesCount,
       activeVehiclesWeight: activeVehiclesWeight ?? this.activeVehiclesWeight,
-      transportVehiclesWeight: transportVehiclesWeight ?? this.transportVehiclesWeight,
+      transportVehiclesWeight:
+      transportVehiclesWeight ?? this.transportVehiclesWeight,
       totalVehiclesWeight: totalVehiclesWeight ?? this.totalVehiclesWeight,
       departureStation: departureStation ?? this.departureStation,
       currentStation: currentStation ?? this.currentStation,
@@ -250,6 +288,7 @@ class ReportData {
       doorControlStatus: doorControlStatus ?? this.doorControlStatus,
       powerSupplyStatus: powerSupplyStatus ?? this.powerSupplyStatus,
       highSpeedCarsStatus: highSpeedCarsStatus ?? this.highSpeedCarsStatus,
+      tjrFileName: tjrFileName ?? this.tjrFileName,
     );
   }
 }

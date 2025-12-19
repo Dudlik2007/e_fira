@@ -15,11 +15,33 @@ class TrainEditListPage extends StatefulWidget {
 
 class _TrainEditListPageState extends State<TrainEditListPage> {
   late List<ReportData> _trains;
+  late List<ReportData> _filteredTrains;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _trains = List.from(widget.trains);
+    _filteredTrains = List.from(_trains);
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredTrains = _trains.where((train) {
+        final name = train.trainName.toLowerCase();
+        final number = train.trainNumber.toLowerCase();
+        return name.contains(query) || number.contains(query);
+      }).toList();
+    });
   }
 
   Future<void> _saveTrains() async {
@@ -40,10 +62,12 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       context,
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
-          train: _trains[index],
+          train: _filteredTrains[index],
           onSave: (updated) {
+            final originalIndex = _trains.indexOf(_filteredTrains[index]);
             setState(() {
-              _trains[index] = updated;
+              _trains[originalIndex] = updated;
+              _onSearchChanged();
             });
             _saveTrains();
             _showMessage("Změny byly uloženy");
@@ -76,8 +100,10 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
     );
 
     if (confirm == true) {
+      final trainToRemove = _filteredTrains[index];
       setState(() {
-        _trains.removeAt(index);
+        _trains.remove(trainToRemove);
+        _onSearchChanged();
       });
       await _saveTrains();
       _showMessage("Vlak byl smazán");
@@ -130,6 +156,7 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
           onSave: (created) {
             setState(() {
               _trains.add(created);
+              _onSearchChanged();
             });
             _saveTrains();
             _showMessage("Nový vlak byl přidán");
@@ -143,12 +170,75 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        title: const Text("Editor vlaků"),
-        backgroundColor: const Color(0xFF1E1E1E),
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1E1E1E), Color(0xFF2C2C2C)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.blueAccent,
+                width: 1.2,
+              ),
+            ),
+          ),
+          child: AppBar(
+            iconTheme: const IconThemeData(color: Colors.blueAccent),
+            automaticallyImplyLeading: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: _isSearching
+                ? TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: const TextStyle(color: Colors.white),
+              cursorColor: Colors.blueAccent,
+              decoration: const InputDecoration(
+                hintText: "Hledat vlak...",
+                hintStyle: TextStyle(color: Colors.white54),
+                border: InputBorder.none,
+              ),
+            )
+                : const Text(
+              "Editor vlaků",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _isSearching ? Icons.close : Icons.search,
+                  color: Colors.blueAccent,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (_isSearching) {
+                      _searchController.clear();
+                    }
+                    _isSearching = !_isSearching;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
       ),
-      body: _trains.isEmpty
+      body: _filteredTrains.isEmpty
           ? const Center(
         child: Text(
           "Žádné vlaky k zobrazení",
@@ -156,9 +246,9 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
         ),
       )
           : ListView.builder(
-        itemCount: _trains.length,
+        itemCount: _filteredTrains.length,
         itemBuilder: (context, index) {
-          final train = _trains[index];
+          final train = _filteredTrains[index];
           return Card(
             color: const Color(0xFF1E1E1E),
             shape: RoundedRectangleBorder(
