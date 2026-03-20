@@ -35,3 +35,5 @@ Os10542,10542,80,53,12n,3,...
 👨‍💻 Autor
 
 Matěj
+
+funkční program lze stánout zde: \https://github.com/Dudlik2007/e_fira/releases
