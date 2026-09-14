@@ -63,13 +63,13 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
           train: _filteredTrains[index],
-          onSave: (updated) {
+          onSave: (updated) async {
             final originalIndex = _trains.indexOf(_filteredTrains[index]);
             setState(() {
               _trains[originalIndex] = updated;
               _onSearchChanged();
             });
-            _saveTrains();
+            await _saveTrains();
             _showMessage("Změny byly uloženy");
           },
         ),
@@ -110,8 +110,8 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
     }
   }
 
-  void _addTrain() async {
-    final newTrain = ReportData(
+  ReportData _emptyTrain() {
+    return ReportData(
       trainName: "Nový vlak",
       trainNumber: "",
       maxSpeed: "0",
@@ -147,18 +147,21 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       powerSupplyStatus: "",
       highSpeedCarsStatus: "",
     );
+  }
 
+  void _addTrain() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
-          train: newTrain,
-          onSave: (created) {
+          train: _emptyTrain(),
+          allowMultipleSaves: true,
+          onSave: (created) async {
             setState(() {
               _trains.add(created);
               _onSearchChanged();
             });
-            _saveTrains();
+            await _saveTrains();
             _showMessage("Nový vlak byl přidán");
           },
         ),

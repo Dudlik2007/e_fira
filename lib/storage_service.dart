@@ -1,9 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:charset/charset.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
 import 'report_data.dart';
 
 class StorageService {
+  static String decodeText(List<int> bytes) {
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      return windows1250.decode(bytes);
+    }
+  }
+
+  static List<int> encodeWindows1250(String text) => windows1250.encode(text);
   static const String _localFileName = 'trains_data.csv';
 
   // 📁 Cesta do interní složky
@@ -109,7 +120,7 @@ class StorageService {
     final folder = await _getTjrFolder();
     final path = '$folder/$trainNumber.txt';
     final file = File(path);
-    await file.writeAsString(content);
+    await file.writeAsString(content, flush: true);
   }
 
   /// Vrátí cestu k TJŘ, pokud existuje
@@ -132,6 +143,7 @@ class StorageService {
   static Future<String?> loadTjrContent(String trainNumber) async {
     final path = await getTjrPath(trainNumber);
     if (path == null) return null;
-    return File(path).readAsString();
+    final bytes = await File(path).readAsBytes();
+    return decodeText(bytes);
   }
 }

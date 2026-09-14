@@ -216,8 +216,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                             ).then((_) => _loadTrains());
                           },
                         ),
-                        if (train.tjrFileName != null &&
-                            train.tjrFileName!.isNotEmpty)
+                        if (train.trainNumber.trim().isNotEmpty)
                           IconButton(
                             icon: const Icon(Icons.description,
                                 color: Colors.amberAccent),
@@ -228,7 +227,8 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                                 MaterialPageRoute(
                                   builder: (context) => TrainTjrViewPage(
                                     trainName: train.trainName,
-                                    tjrFileName: train.tjrFileName!,
+                                    trainNumber: train.trainNumber,
+                                    tjrFileName: train.tjrFileName ?? '',
                                   ),
                                 ),
                               ).then((_) => _loadTrains());

@@ -3,12 +3,14 @@ import 'report_data.dart';
 
 class TrainEditorPage extends StatefulWidget {
   final ReportData train;
-  final ValueChanged<ReportData> onSave;
+  final Future<void> Function(ReportData) onSave;
+  final bool allowMultipleSaves;
 
   const TrainEditorPage({
     super.key,
     required this.train,
     required this.onSave,
+    this.allowMultipleSaves = false,
   });
 
   @override
@@ -25,10 +27,53 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     _edited = widget.train;
   }
 
-  void _save() {
-    // už žádné volání validate(), protože žádné pole není povinné
-    widget.onSave(_edited);
-    Navigator.pop(context);
+  Future<void> _save({bool closeAfterSave = true}) async {
+    await widget.onSave(_edited);
+    if (!mounted) return;
+
+    if (closeAfterSave) {
+      Navigator.pop(context);
+      return;
+    }
+
+    setState(() {
+      _edited = ReportData(
+        trainName: 'Nový vlak',
+        trainNumber: '',
+        maxSpeed: '0',
+        trainLength: '0',
+        trainCars: 0,
+        trainWheels: '',
+        brakeTypeD: '0',
+        brakeTypeK: '0',
+        brakeMode: '',
+        brakingModeP: '0',
+        brakingModeR: '0',
+        brakingModeRMg: '0',
+        brakePercent: '0',
+        brakingPercentageActual: '0',
+        brakingPercentageRequired: '0',
+        brakingPercentageMissing: '0',
+        activeVehiclesCount: 0,
+        transportVehiclesCount: 0,
+        totalVehiclesCount: 0,
+        activeVehiclesWeight: 0,
+        transportVehiclesWeight: 0,
+        totalVehiclesWeight: 0,
+        departureStation: '',
+        currentStation: '',
+        destinationStation: '',
+        uzbLocation: '',
+        uzbPerformedBy: '',
+        jzbLocation: '',
+        jzbPerformedBy: '',
+        nbuStatus: '',
+        topSpeedAllowed: '',
+        doorControlStatus: '',
+        powerSupplyStatus: '',
+        highSpeedCarsStatus: '',
+      );
+    });
   }
 
   Widget _buildField({
@@ -67,8 +112,15 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _save,
+            tooltip: 'Uložit vlak',
+            onPressed: () => _save(closeAfterSave: true),
           ),
+          if (widget.allowMultipleSaves)
+            IconButton(
+              icon: const Icon(Icons.save_alt),
+              tooltip: 'Uložit a přidat další',
+              onPressed: () => _save(closeAfterSave: false),
+            ),
         ],
       ),
       body: Form(
@@ -86,7 +138,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             _buildField(
               label: "Číslo vlaku",
               initial: _edited.trainNumber,
-              isNumber: true,
               onChanged: (v) => _edited = _edited.copyWith(trainNumber: v),
             ),
             _buildField(

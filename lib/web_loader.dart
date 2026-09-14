@@ -248,7 +248,8 @@ class WebSyncService {
           final uri = Uri.parse('$finalBaseUrl$number.txt');
           final response = await client.get(uri).timeout(const Duration(seconds: 8));
           if (response.statusCode == 200) {
-            await StorageService.saveTjrFile(number, response.body);
+            final text = StorageService.decodeText(response.bodyBytes);
+            await StorageService.saveTjrFile(number, text);
             downloaded++;
           } else {
             failed++;

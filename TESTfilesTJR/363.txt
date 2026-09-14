@@ -1,0 +1,24 @@
+Dresden HBF|75|1|0|
+Dresden S-Bf. Strehlen|2339|3|182|
+Dresden S-Bahnhof Reick|2148|3|227|
+Dresden S-Bahnhof Dobritz|1551|3|226|
+Dresden S-Bahnhof Niedersedlitz|1768|2|133|
+Dresden S-Bf. Zschachwitz|1481|1|118|
+Heidenau Bahnhof|1257|2|159|
+Heidenau S-Bahnhof Süd|1495|3|190|
+Heidenau S-Bf. Großsedlitz|1732|2|132|
+Pirna|2636|4|293|
+Obervogelgesang|4778|4|253|
+Stadt Wehlen|3877|3|188|
+Kurort Rathen|3366|2|124|
+Konigstein|6309|4|260|
+Bad Schandau|4915|3|222|
+Krippen|1724|2|146|
+Schmilka-Hirschmuhle|5542|4|252|
+Schona|1462|1|67|
+Dolni Zleb|3777|3|236|
+Dolni Zleb zastavka|1066|2|177|
+Decin Certova Voda|2308|3|220|
+Decin Prostredni Zleb|2849|6|360|
+Decin priper|2287|1|119|
+Decin hl. n.|1838|3|204|
