@@ -1,4 +1,3 @@
-import 'package:charset/charset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:e_fira/report_data.dart';
@@ -57,7 +56,7 @@ void main() {
       MaterialApp(
         home: TrainEditorPage(
           train: train,
-          onSave: (_) {},
+          onSave: (_) async {},
         ),
       ),
     );

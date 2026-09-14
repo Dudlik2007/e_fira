@@ -46,9 +46,6 @@ class _WebLoaderPageState extends State<WebLoaderPage> {
 
   Future<void> _loadUrls() async {
     final prefs = await SharedPreferences.getInstance();
-    // V initState není třeba setState, ale pro konzistenci
-    // s možným budoucím voláním je bezpečnější to zde nechat
-    // a ošetřit přes mounted check.
     _safeSetState(() {
       _csvUrlController.text = prefs.getString(_csvUrlKey) ?? '';
       _ebulaUrlController.text = prefs.getString(_ebulaBaseUrlKey) ?? '';
@@ -72,7 +69,6 @@ class _WebLoaderPageState extends State<WebLoaderPage> {
     bool syncSuccess = false;
     try {
       await _saveUrls();
-      // Vytvoření instance služby, aby byla logika oddělená a testovatelná
       final syncService = WebSyncService();
       final result = await syncService.syncFromWeb(
         csvUrl: _csvUrlController.text,
@@ -86,11 +82,9 @@ class _WebLoaderPageState extends State<WebLoaderPage> {
       _safeSetState(() => _statusMessage = 'Nastala neočekávaná chyba: $e');
     } finally {
       _safeSetState(() => _isLoading = false);
-      // Pokud synchronizace proběhla úspěšně, zavři stránku a vrať výsledek.
       if (syncSuccess && mounted) {
-        // Počkej chvíli, aby si uživatel stihl přečíst zprávu o úspěchu
         await Future.delayed(const Duration(seconds: 1));
-        Navigator.of(context).pop(true); // Vrací `true` jako signál k obnovení
+        Navigator.of(context).pop(true);
       }
     }
   }
@@ -131,11 +125,11 @@ class _WebLoaderPageState extends State<WebLoaderPage> {
               ),
               child: _isLoading
                   ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 3),
-              )
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 3),
+                    )
                   : const Text('Načíst a synchronizovat'),
             ),
             const SizedBox(height: 24),
@@ -144,10 +138,10 @@ class _WebLoaderPageState extends State<WebLoaderPage> {
                 _statusMessage,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: _statusMessage.startsWith('Chyba')
-                      ? Theme.of(context).colorScheme.error
-                      : null,
-                ),
+                      color: _statusMessage.startsWith('Chyba')
+                          ? Theme.of(context).colorScheme.error
+                          : null,
+                    ),
               ),
           ],
         ),
@@ -182,7 +176,7 @@ class WebSyncService {
     try {
       // --- CSV ---
       final trains = await _downloadAndParseCsv(client, finalCsvUrl);
-      await StorageService.saveTrains(trains);
+      await StorageService.saveWebTrains(trains);
 
       // --- eBula TXT ---
       final summary = await _downloadEbulaFiles(client, trains, finalEbulaBaseUrl);
@@ -195,7 +189,6 @@ class WebSyncService {
     } on FormatException {
       throw SyncException('Zadaná URL adresa má neplatný formát.');
     } catch (e) {
-      // Pokud to není naše výjimka, zabalíme ji pro lepší kontext
       if (e is! SyncException) {
         throw SyncException('Při synchronizaci nastala chyba: $e');
       }
@@ -208,7 +201,7 @@ class WebSyncService {
   Future<List<ReportData>> _downloadAndParseCsv(
       http.Client client, String url) async {
     final response =
-    await client.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
+        await client.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
     if (response.statusCode != 200) {
       throw SyncException(
           'Nelze stáhnout CSV (server odpověděl: ${response.statusCode})');
@@ -219,11 +212,10 @@ class WebSyncService {
       throw SyncException('CSV je prázdné nebo obsahuje pouze hlavičku.');
     }
 
-    // .map().toList() je efektivnější než for cyklus s manuálním přidáváním
     return rows
         .skip(1)
         .map((row) => ReportData.fromCsvRow(
-        row.map((e) => e.toString()).toList()))
+            row.map((e) => e.toString()).toList()))
         .toList();
   }
 
@@ -231,40 +223,48 @@ class WebSyncService {
       http.Client client,
       List<ReportData> trains,
       String baseUrl,
-      ) async {
+  ) async {
     int downloaded = 0;
     int failed = 0;
-    final finalBaseUrl = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
-
-    // Paralelní stahování pro zrychlení
-    final downloadTasks = <Future>[];
+    
+    final baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/');
 
     for (final train in trains) {
       final number = train.trainNumber.trim();
       if (number.isEmpty) continue;
+      
+      String fileName = train.tjrFileName?.trim().isNotEmpty == true
+          ? train.tjrFileName!.trim()
+          : '$number.txt';
 
-      final task = () async {
-        try {
-          final uri = Uri.parse('$finalBaseUrl$number.txt');
-          final response = await client.get(uri).timeout(const Duration(seconds: 8));
-          if (response.statusCode == 200) {
-            final text = StorageService.decodeText(response.bodyBytes);
-            await StorageService.saveTjrFile(number, text);
-            downloaded++;
-          } else {
-            failed++;
-          }
-        } catch (_) {
+      // Zajištění, že soubor bude mít VŽDY koncovku .txt
+      if (!fileName.toLowerCase().endsWith('.txt')) {
+        fileName = '$fileName.txt';
+      }
+
+      try {
+        final uri = baseUri.resolve(fileName);
+        print('WebSyncService: Pokouším se stáhnout: $uri');
+        
+        final response = await client.get(uri).timeout(const Duration(seconds: 8));
+        
+        if (response.statusCode == 200) {
+          final text = StorageService.decodeText(response.bodyBytes);
+          await StorageService.saveTjrFile(number, text, fileName: fileName);
+          downloaded++;
+        } else {
+          print('❌ WebSyncService: Soubor $fileName selhal s HTTP kódem: ${response.statusCode}');
           failed++;
         }
-      }();
-      downloadTasks.add(task);
+      } catch (e) {
+        print('❌ WebSyncService: Neočekávaná chyba při stahování $fileName: $e');
+        failed++;
+      }
     }
 
-    await Future.wait(downloadTasks); // Čeká na dokončení všech stahování
     return (downloaded: downloaded, failed: failed);
   }
-}
+} // <--- CHYBĚJÍCÍ ZÁVORKA PŘIDÁNA ZDE
 
 /// 🔄 Automatická synchronizace při startu aplikace
 Future<void> runStartupSync() async {

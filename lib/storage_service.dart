@@ -16,6 +16,7 @@ class StorageService {
 
   static List<int> encodeWindows1250(String text) => windows1250.encode(text);
   static const String _localFileName = 'trains_data.csv';
+  static const String _webSourceFileName = 'web_sync.csv';
 
   // 📁 Cesta do interní složky
   static Future<Directory> _getBaseDirectory() async {
@@ -26,6 +27,12 @@ class StorageService {
   static Future<String> _getCsvPath() async {
     final dir = await _getBaseDirectory();
     return '${dir.path}/$_localFileName';
+  }
+
+  static Future<Directory> _getTrainSourcesDirectory() async {
+    final dir = Directory('${(await _getBaseDirectory()).path}/train_sources');
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
   }
 
   // 📁 Cesta pro TJŘ TXT
@@ -54,11 +61,60 @@ class StorageService {
     await file.writeAsString(csv);
   }
 
-  static Future<List<ReportData>> loadTrains() async {
-    final file = File(await _getCsvPath());
-    if (!await file.exists()) return [];
+  static Future<void> _saveTrainsFile(
+      File file, List<ReportData> trains) async {
+    final rows = <List<dynamic>>[ReportData.csvHeader()];
+    rows.addAll(trains.map((train) => train.toCsvRow()));
+    final csv = const ListToCsvConverter().convert(rows);
+    await file.writeAsString(csv);
+  }
 
-    final content = await file.readAsString();
+  static Future<List<ReportData>> loadTrains() async {
+    final files = <File>[File(await _getCsvPath())];
+    final sourcesDirectory = await _getTrainSourcesDirectory();
+    final sourceFiles = await sourcesDirectory
+        .list()
+        .where((entity) => entity is File && entity.path.endsWith('.csv'))
+        .map((entity) => File(entity.path))
+        .toList();
+    sourceFiles.sort((a, b) => a.path.compareTo(b.path));
+    files.addAll(sourceFiles);
+
+    final trains = <ReportData>[];
+    for (final file in files) {
+      if (!await file.exists()) continue;
+      final content = decodeText(await file.readAsBytes());
+      final rows = const CsvToListConverter(eol: '\n').convert(content);
+      for (int i = 1; i < rows.length; i++) {
+        final row = rows[i].map((e) => e.toString()).toList();
+        trains.add(ReportData.fromCsvRow(row));
+      }
+    }
+    return trains;
+  }
+
+  static Future<void> saveWebTrains(List<ReportData> trains) async {
+    final directory = await _getTrainSourcesDirectory();
+    await _saveTrainsFile(
+      File('${directory.path}/$_webSourceFileName'),
+      trains,
+    );
+  }
+
+  static Future<void> saveImportedTrains(
+      List<ReportData> trains, {
+      String? sourceName,
+      }) async {
+    final directory = await _getTrainSourcesDirectory();
+    final safeSourceName = sourceName == null || sourceName.trim().isEmpty
+        ? 'import_${DateTime.now().microsecondsSinceEpoch}.csv'
+        : sourceName.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
+    final fileName = 'import_$safeSourceName';
+    await _saveTrainsFile(File('${directory.path}/$fileName'), trains);
+  }
+
+  static Future<List<ReportData>> _parseCsvBytes(List<int> bytes) async {
+    final content = decodeText(bytes);
     final rows = const CsvToListConverter(eol: '\n').convert(content);
 
     final trains = <ReportData>[];
@@ -98,16 +154,16 @@ class StorageService {
     final file = File(path);
     if (!await file.exists()) return [];
 
-    final content = await file.readAsString();
-    final rows = const CsvToListConverter(eol: '\n').convert(content);
+    return importFromBytes(await file.readAsBytes());
+  }
 
-    final trains = <ReportData>[];
-    for (int i = 1; i < rows.length; i++) {
-      final row = rows[i].map((e) => e.toString()).toList();
-      trains.add(ReportData.fromCsvRow(row));
-    }
+  static Future<List<ReportData>> importFromBytes(
+    List<int> bytes, {
+    String? sourceName,
+  }) async {
+    final trains = await _parseCsvBytes(bytes);
 
-    await saveTrains(trains);
+    await saveImportedTrains(trains, sourceName: sourceName);
     return trains;
   }
 
@@ -116,11 +172,39 @@ class StorageService {
   //----------------------------------------------------------------------
 
   /// Uloží TJŘ pro vlak (např. "10542.txt")
-  static Future<void> saveTjrFile(String trainNumber, String content) async {
+  static Future<void> saveTjrFile(
+    String trainNumber,
+    String content, {
+    String? fileName,
+  }) async {
     final folder = await _getTjrFolder();
-    final path = '$folder/$trainNumber.txt';
+    final safeFileName = (fileName?.trim().isNotEmpty ?? false)
+        ? fileName!.trim().replaceAll(RegExp(r'[\\/]'), '_')
+        : '$trainNumber.txt';
+    final path = '$folder/$safeFileName';
     final file = File(path);
     await file.writeAsString(content, flush: true);
+  }
+
+  static Future<void> importTjrFile(String fileName, List<int> bytes) async {
+    final safeFileName = fileName.trim();
+    if (safeFileName.isEmpty) return;
+
+    final content = decodeText(bytes);
+    await saveTjrFile(
+      safeFileName,
+      content,
+      fileName: safeFileName,
+    );
+
+    final baseName = safeFileName.split(RegExp(r'[\\/]')).last;
+    final digits = RegExp(r'\d+').firstMatch(baseName)?.group(0);
+    if (digits != null) {
+      final number = digits.replaceFirst(RegExp(r'^0+(?=\d)'), '');
+      if (number.isNotEmpty && number != safeFileName) {
+        await saveTjrFile(number, content, fileName: '$number.txt');
+      }
+    }
   }
 
   /// Vrátí cestu k TJŘ, pokud existuje

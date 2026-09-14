@@ -111,15 +111,18 @@ class WelcomeScreen extends StatelessWidget {
               icon: const Icon(Icons.settings),
               label: const Text('Centrální nastavení'),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.maybeOf(context);
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('skipWelcome', true);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Uvítací obrazovka bude přeskočena při příštím spuštění.'),
-                  ),
-                );
+                if (messenger != null) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Uvítací obrazovka bude přeskočena při příštím spuštění.'),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

@@ -34,28 +34,29 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
   Future<void> _loadTjrData() async {
     try {
       final dir = await getTjrDirectory();
-      final fileNames = <String>{
-        widget.tjrFileName.trim(),
-        '${widget.trainNumber.trim()}.txt',
-      }..removeWhere((name) => name == '.txt' || name.isEmpty);
-
-      File? file;
-      for (final fileName in fileNames) {
-        final candidate = File('${dir.path}/$fileName');
-        if (await candidate.exists()) {
-          file = candidate;
-          break;
-        }
+      
+      // 1. Získání názvu z parametru tjrFileName a odstranění bílých znaků
+      String fileName = widget.tjrFileName.trim();
+      
+      // 2. Přidání koncovky .txt, pokud v názvu chybí
+      if (!fileName.toLowerCase().endsWith('.txt')) {
+        fileName += '.txt';
       }
 
-      if (file == null) {
+      // 3. Vytvoření cesty k jedinému souboru
+      final file = File('${dir.path}/$fileName');
+
+      // 4. Ověření existence
+      if (!(await file.exists())) {
         setState(() {
           _isLoading = false;
-          _error = 'TJŘ soubor nebyl nalezen. Zkontrolujte synchronizaci vlaku.';
+          // Vypsání přesné cesty, aby bylo hned jasné, kde aplikace hledá
+          _error = 'TJŘ soubor nebyl nalezen.\n\nHledaná cesta:\n${file.path}';
         });
         return;
       }
 
+      // 5. Načtení dat a rozdělení
       final raw = StorageService.decodeText(await file.readAsBytes());
 
       final lines = raw.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
@@ -65,23 +66,33 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
       _headerText = lines.take(tableStart).join('\n');
       final tableLines = lines.skip(tableStart).toList();
 
-      // Detekce formátu podle přítomnosti znaku | na prvním řádku
-      bool isPipeFormat = tableLines.isNotEmpty && tableLines.first.contains('|');
+      // Detekce formátu pro celou tabulku (pokud alespoň jeden řádek obsahuje svislítko)
+      bool isPipeFormat = tableLines.any((line) => line.contains('|'));
 
       _tableData = tableLines.map((line) {
         List<String> cells;
+        
         if (isPipeFormat) {
+          // Zpracování formátu se svislítkem (např. 1233.txt)
           cells = line.split('|').map((p) => p.trim()).toList();
           // Zabrání vytvoření prázdného sloupce kvůli koncovému |
           if (cells.isNotEmpty && cells.last.isEmpty) {
             cells.removeLast();
           }
         } else {
-          // Oddělení tabulátorem nebo vícenásobnými mezerami
-          cells = line.split(RegExp(r'\t+|\s{2,}'))
+          // Zpracování formátu s tabulátory (např. 10542.txt)
+          cells = line.split(RegExp(r'\t+'))
               .map((p) => p.trim())
               .where((p) => p.isNotEmpty)
               .toList();
+              
+          // Záložní řešení, pokud by soubor omylem používal jen vícenásobné mezery
+          if (cells.length == 1 && line.contains(RegExp(r'\s{2,}'))) {
+            cells = line.split(RegExp(r'\s{2,}'))
+                .map((p) => p.trim())
+                .where((p) => p.isNotEmpty)
+                .toList();
+          }
         }
         return cells;
       }).toList();
@@ -114,7 +125,16 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _error != null
-          ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _error!, 
+                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
           : Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

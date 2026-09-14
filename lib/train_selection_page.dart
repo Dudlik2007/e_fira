@@ -1,5 +1,3 @@
-// file: C:/Users/admin/StudioProjects/e_fira/lib/train_selection_page.dart. 
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'report_page.dart';
@@ -7,7 +5,7 @@ import 'report_data.dart';
 import 'storage_service.dart';
 import 'train_edit_list_page.dart';
 import 'train_tjr_view_page.dart';
-import 'web_loader.dart'; // Ujisti se, že importuješ web_loader.dart
+import 'web_loader.dart';
 import 'dart:io';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -69,30 +67,76 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
   }
 
   Future<void> _importTrains() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      dialogTitle: 'Vyber CSV soubor vlaků',
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-    );
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Vyber CSV soubor vlaků',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        withData: true,
+      );
+      if (result == null) return;
 
-    if (result != null && result.files.single.path != null) {
-      final imported =
-      await StorageService.importFromFile(result.files.single.path!);
-
-      if (imported.isNotEmpty) {
-        setState(() {
-          trains = imported;
-          _applyFilter(_filter); // Znovu aplikujeme filtr na importovaná data
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Vlaky byly importovány a uloženy")),
-        );
+      final pickedFile = result.files.single;
+      final bytes = await _readPickedFile(pickedFile);
+      if (bytes == null) {
+        _showImportMessage('Soubor se nepodařilo přečíst.');
+        return;
       }
+
+      final imported = await StorageService.importFromBytes(
+        bytes,
+        sourceName: pickedFile.name,
+      );
+      await _loadTrains();
+      _showImportMessage('Importováno vlaků: ${imported.length}');
+    } catch (e) {
+      _showImportMessage('Import CSV selhal: $e');
     }
   }
 
-  // --- ZMĚNA JE POUZE ZDE ---
+  Future<void> _importTjrFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      dialogTitle: 'Vyber TJŘ TXT soubory',
+      type: FileType.any,
+      allowMultiple: true,
+      withData: true,
+    );
+
+    if (result == null) return;
+
+    var importedCount = 0;
+    for (final pickedFile in result.files) {
+      if (!pickedFile.name.toLowerCase().endsWith('.txt')) continue;
+      final bytes = await _readPickedFile(pickedFile);
+      if (bytes == null) continue;
+
+      await StorageService.importTjrFile(pickedFile.name, bytes);
+      importedCount++;
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Importováno TJŘ souborů: $importedCount')),
+    );
+  }
+
+  Future<List<int>?> _readPickedFile(PlatformFile pickedFile) async {
+    if (pickedFile.bytes != null) return pickedFile.bytes;
+    final path = pickedFile.path;
+    if (path == null) return null;
+
+    final file = File(path);
+    if (!await file.exists()) return null;
+    return file.readAsBytes();
+  }
+
+  void _showImportMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Future<void> _navigateToWebLoader() async {
     // Používáme push, ale tentokrát čekáme na výsledek (Future<bool?>)
     final bool? shouldRefresh = await Navigator.push<bool>(
@@ -111,7 +155,6 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
       }
     }
   }
-  // --- KONEC ZMĚNY ---
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +174,11 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
             icon: const Icon(Icons.download),
             tooltip: "Importovat vlaky",
             onPressed: _importTrains,
+          ),
+          IconButton(
+            icon: const Icon(Icons.description),
+            tooltip: "Importovat TJŘ soubory",
+            onPressed: _importTjrFiles,
           ),
           if (Platform.isWindows || Platform.isLinux)
             IconButton(
@@ -178,68 +226,68 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
           Expanded(
             child: trains.isEmpty
                 ? const Center(
-              child: Text(
-                "Nenalezeny žádné uložené vlaky",
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-            )
+                    child: Text(
+                      "Nenalezeny žádné uložené vlaky",
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  )
                 : ListView.builder(
-              itemCount: filteredTrains.length,
-              itemBuilder: (context, index) {
-                final train = filteredTrains[index];
-                return Card(
-                  color: const Color(0xFF1E1E1E),
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    title: Text(
-                      "${train.trainName} (${train.trainNumber})",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      "Rychlost: ${train.maxSpeed} km/h",
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.table_chart,
-                              color: Colors.lightBlueAccent),
-                          tooltip: "Otevřít brzděnku",
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReportPage(data: train),
-                              ),
-                            ).then((_) => _loadTrains());
-                          },
-                        ),
-                        if (train.trainNumber.trim().isNotEmpty)
-                          IconButton(
-                            icon: const Icon(Icons.description,
-                                color: Colors.amberAccent),
-                            tooltip: "Zobrazit jízdní řád (TJŘ)",
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TrainTjrViewPage(
-                                    trainName: train.trainName,
-                                    trainNumber: train.trainNumber,
-                                    tjrFileName: train.tjrFileName ?? '',
-                                  ),
-                                ),
-                              ).then((_) => _loadTrains());
-                            },
+                    itemCount: filteredTrains.length,
+                    itemBuilder: (context, index) {
+                      final train = filteredTrains[index];
+                      return Card(
+                        color: const Color(0xFF1E1E1E),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: ListTile(
+                          title: Text(
+                            "${train.trainName} (${train.trainNumber})",
+                            style: const TextStyle(color: Colors.white),
                           ),
-                      ],
-                    ),
+                          subtitle: Text(
+                            "Rychlost: ${train.maxSpeed} km/h",
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.table_chart,
+                                    color: Colors.lightBlueAccent),
+                                tooltip: "Otevřít brzděnku",
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ReportPage(data: train),
+                                    ),
+                                  ).then((_) => _loadTrains());
+                                },
+                              ),
+                              if (train.trainNumber.trim().isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.description,
+                                      color: Colors.amberAccent),
+                                  tooltip: "Zobrazit jízdní řád (TJŘ)",
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TrainTjrViewPage(
+                                          trainName: train.trainName,
+                                          trainNumber: train.trainNumber,
+                                          tjrFileName: train.tjrFileName ?? '',
+                                        ),
+                                      ),
+                                    ).then((_) => _loadTrains());
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
 
           const SizedBox(height: 8),

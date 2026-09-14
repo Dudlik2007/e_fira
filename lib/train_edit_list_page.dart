@@ -110,8 +110,8 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
     }
   }
 
-  ReportData _emptyTrain() {
-    return ReportData(
+  void _addTrain() async {
+    final newTrain = ReportData(
       trainName: "Nový vlak",
       trainNumber: "",
       maxSpeed: "0",
@@ -147,15 +147,12 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       powerSupplyStatus: "",
       highSpeedCarsStatus: "",
     );
-  }
 
-  void _addTrain() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
-          train: _emptyTrain(),
-          allowMultipleSaves: true,
+          train: newTrain,
           onSave: (created) async {
             setState(() {
               _trains.add(created);
