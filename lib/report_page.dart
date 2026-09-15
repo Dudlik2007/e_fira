@@ -431,7 +431,7 @@ class ReportPage extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(child: _coloredIndicatorSplit('Napájení na 25 kV AC', data.powerSupplyStatus, Colors.lightBlue)),
                     const SizedBox(width: 4),
-                    Expanded(child: _coloredIndicatorSplit('Horní rychl. - vozy', data.highSpeedCarsStatus, Colors.brown)),
+                    Expanded(child: _coloredIndicatorSplit('Rychlostní profil', data.highSpeedCarsStatus, Colors.brown)),
                   ],
                 ),
               ),

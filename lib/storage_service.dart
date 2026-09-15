@@ -16,27 +16,22 @@ class StorageService {
   }
 
   static List<int> encodeWindows1250(String text) => windows1250.encode(text);
+  
+  // 📁 Používáme POUZE JEDEN hlavní soubor
   static const String _localFileName = 'trains_data.csv';
-  static const String _webSourceFileName = 'web_sync.csv';
 
   // 📁 Cesta do interní složky
   static Future<Directory> _getBaseDirectory() async {
     return await getApplicationDocumentsDirectory();
   }
 
-  // 📁 Cesta k CSV databázi vlaků
+  // 📁 Cesta k hlavní (jediné) CSV databázi vlaků
   static Future<String> _getCsvPath() async {
     final dir = await _getBaseDirectory();
     return '${dir.path}/$_localFileName';
   }
 
-  static Future<Directory> _getTrainSourcesDirectory() async {
-    final dir = Directory('${(await _getBaseDirectory()).path}/train_sources');
-    if (!await dir.exists()) await dir.create(recursive: true);
-    return dir;
-  }
-
-// 📁 Cesta pro TJŘ TXT
+  // 📁 Cesta pro TJŘ TXT
   static Future<String> _getTjrFolder() async {
     // Volá se centralizovaná funkce, aby obě platformy měly shodnou cestu
     final dir = await getTjrDirectory();
@@ -44,9 +39,10 @@ class StorageService {
   }
 
   //----------------------------------------------------------------------
-  // 🔽 ULOŽENÍ & NAČTENÍ CSV VLAKŮ
+  // 🔽 ULOŽENÍ & NAČTENÍ CSV VLAKŮ (JEDEN SOUBOR)
   //----------------------------------------------------------------------
 
+  /// Natvrdo přepíše hlavní soubor seznamem vlaků (používá se po mergování nebo při úpravách)
   static Future<void> saveTrains(List<ReportData> trains) async {
     final header = ReportData.csvHeader();
     final rows = <List<dynamic>>[header];
@@ -60,56 +56,67 @@ class StorageService {
     await file.writeAsString(csv);
   }
 
-  static Future<void> _saveTrainsFile(
-      File file, List<ReportData> trains) async {
-    final rows = <List<dynamic>>[ReportData.csvHeader()];
-    rows.addAll(trains.map((train) => train.toCsvRow()));
-    final csv = const ListToCsvConverter().convert(rows);
-    await file.writeAsString(csv);
-  }
-
+  /// Načte všechny vlaky pouze z jednoho hlavního CSV souboru
   static Future<List<ReportData>> loadTrains() async {
-    final files = <File>[File(await _getCsvPath())];
-    final sourcesDirectory = await _getTrainSourcesDirectory();
-    final sourceFiles = await sourcesDirectory
-        .list()
-        .where((entity) => entity is File && entity.path.endsWith('.csv'))
-        .map((entity) => File(entity.path))
-        .toList();
-    sourceFiles.sort((a, b) => a.path.compareTo(b.path));
-    files.addAll(sourceFiles);
+    final file = File(await _getCsvPath());
+    
+    if (!await file.exists()) {
+      return [];
+    }
 
     final trains = <ReportData>[];
-    for (final file in files) {
-      if (!await file.exists()) continue;
+    try {
       final content = decodeText(await file.readAsBytes());
       final rows = const CsvToListConverter(eol: '\n').convert(content);
+      
       for (int i = 1; i < rows.length; i++) {
         final row = rows[i].map((e) => e.toString()).toList();
         trains.add(ReportData.fromCsvRow(row));
       }
+    } catch (e) {
+      print("Chyba při načítání vlaků: $e");
     }
+    
     return trains;
   }
 
-  static Future<void> saveWebTrains(List<ReportData> trains) async {
-    final directory = await _getTrainSourcesDirectory();
-    await _saveTrainsFile(
-      File('${directory.path}/$_webSourceFileName'),
-      trains,
-    );
+  /// ⚙️ MERGOVÁNÍ: Vezme nové vlaky, porovná je s existujícími a sloučí je dohromady.
+  /// Nedělá duplikáty, ale aktualizuje data.
+  static Future<void> saveAndMergeTrains(List<ReportData> newTrains) async {
+    // 1. Načteme stávající data
+    List<ReportData> existingTrains = await loadTrains();
+
+    // 2. Projdeme nově importované vlaky
+    for (var newTrain in newTrains) {
+      // Zjistíme, jestli vlak už existuje (shoda čísla a případně názvu)
+      int existingIndex = existingTrains.indexWhere((t) => 
+          t.trainNumber == newTrain.trainNumber && 
+          t.trainName == newTrain.trainName);
+
+      if (existingIndex != -1) {
+        // Vlak už existuje -> AKTUALIZUJEME starý záznam novým
+        existingTrains[existingIndex] = newTrain;
+      } else {
+        // Vlak ještě neexistuje -> PŘIDÁME ho na konec seznamu
+        existingTrains.add(newTrain);
+      }
+    }
+
+    // 3. Vše uložíme zpět do jednoho souboru (přepíšeme starý)
+    await saveTrains(existingTrains);
   }
 
+  /// Ukládání z webu - nyní pouze předá vlaky k mergování
+  static Future<void> saveWebTrains(List<ReportData> trains) async {
+    await saveAndMergeTrains(trains);
+  }
+
+  /// Ukládání z lokálního importu - nyní pouze předá vlaky k mergování
   static Future<void> saveImportedTrains(
-      List<ReportData> trains, {
-      String? sourceName,
-      }) async {
-    final directory = await _getTrainSourcesDirectory();
-    final safeSourceName = sourceName == null || sourceName.trim().isEmpty
-        ? 'import_${DateTime.now().microsecondsSinceEpoch}.csv'
-        : sourceName.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
-    final fileName = 'import_$safeSourceName';
-    await _saveTrainsFile(File('${directory.path}/$fileName'), trains);
+    List<ReportData> trains, {
+    String? sourceName,
+  }) async {
+    await saveAndMergeTrains(trains);
   }
 
   static Future<List<ReportData>> _parseCsvBytes(List<int> bytes) async {
@@ -161,8 +168,10 @@ class StorageService {
     String? sourceName,
   }) async {
     final trains = await _parseCsvBytes(bytes);
-
+    
+    // Zde probíhá sloučení do hlavního souboru
     await saveImportedTrains(trains, sourceName: sourceName);
+    
     return trains;
   }
 

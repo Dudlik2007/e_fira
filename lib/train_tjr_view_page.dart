@@ -164,25 +164,39 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
     );
   }
 
-  Widget _buildContent() {
-    return SingleChildScrollView(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_headerText.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(_headerText, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+Widget _buildContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              // Zajistí, že obsah bude mít minimálně šířku obrazovky
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  // Zarovnání všeho (hlavičky i tabulky) na střed
+                  crossAxisAlignment: CrossAxisAlignment.center, 
+                  children: [
+                    if (_headerText.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          _headerText, 
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                          textAlign: TextAlign.center, // Vycentrování textu hlavičky
+                        ),
+                      ),
+                    _isPipeFormat ? _buildPipeTable() : _buildTjrTable(),
+                  ],
                 ),
-              _isPipeFormat ? _buildPipeTable() : _buildTjrTable(),
-            ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
