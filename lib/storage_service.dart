@@ -4,6 +4,7 @@ import 'package:charset/charset.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
 import 'report_data.dart';
+import 'file_paths.dart';
 
 class StorageService {
   static String decodeText(List<int> bytes) {
@@ -35,13 +36,11 @@ class StorageService {
     return dir;
   }
 
-  // 📁 Cesta pro TJŘ TXT
+// 📁 Cesta pro TJŘ TXT
   static Future<String> _getTjrFolder() async {
-    final dir = await _getBaseDirectory();
-    final path = '${dir.path}/Brzdenka/TJR';
-    final folder = Directory(path);
-    if (!await folder.exists()) await folder.create(recursive: true);
-    return path;
+    // Volá se centralizovaná funkce, aby obě platformy měly shodnou cestu
+    final dir = await getTjrDirectory();
+    return dir.path;
   }
 
   //----------------------------------------------------------------------
