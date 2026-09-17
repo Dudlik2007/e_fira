@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "616482867820",
+    "firebase_url": "https://e-fira-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "e-fira",
+    "storage_bucket": "e-fira.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616482867820:android:6e4534d98f60a020cae649",
+        "android_client_info": {
+          "package_name": "com.example.e_fira"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuwbDuwJddmdFGHr4BKV33MIT06lALm1c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
