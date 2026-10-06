@@ -23,4 +23,14 @@ const List<String> czStationsList = [
   'Most',
   'Dresden HBF',
   'Berlin HBF',
-  ];
+  'Wien HBF',
+  'Budapest-Keleti',
+  'Bratislava hl.st.',
+  'Praha-Radotín',
+  'Praha-Libeň',
+  'Praha-Holešovice',
+  'Praha-Bubny',
+  'Praha-Vysočany',
+  'Praha-Krč',
+  'Praha jih',
+];

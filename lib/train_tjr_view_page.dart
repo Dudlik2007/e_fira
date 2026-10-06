@@ -58,23 +58,75 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
       int tableStart = lines.indexWhere((l) => RegExp(r'\d').hasMatch(l));
       if (tableStart == -1) tableStart = 0;
 
-      _headerText = lines.take(tableStart).join('\n');
+      // Očištění hlavičky
+      _headerText = lines.take(tableStart).map((l) => l.startsWith('^') ? l.substring(1).trim() : l).join('\n');
       final tableLines = lines.skip(tableStart).toList();
 
-      _isPipeFormat = tableLines.any((line) => line.contains('|'));
+      // Detekce typu souboru
+      final bool hasTractionChanges = tableLines.any((line) => line.startsWith('='));
+      final bool isPipeSeparated = tableLines.any((line) => line.contains('|'));
 
-      if (_isPipeFormat) {
-        // Zpracování 363.txt
-        _pipeData = tableLines.map((line) {
-          List<String> cells = line.split('|').map((p) => p.trim()).toList();
-          if (cells.isNotEmpty && cells.last.isEmpty) cells.removeLast();
-          return cells;
-        }).toList();
-        _pipeMaxCols = _pipeData.fold(0, (max, row) => row.length > max ? row.length : max);
-        
-      } else {
-        // Zpracování 10542.txt (Rozpoznání příjezdů, odjezdů a nulových pobytů)
+      if (hasTractionChanges) {
+        // --- Zpracování Typu 3 (Pipe + Trakční soustavy) ---
+        _isPipeFormat = false; // Budeme vykreslovat přes standardní _buildTjrTable
         List<TjrRowData> parsedRows = [];
+
+        for (String line in tableLines) {
+          if (line.startsWith('^')) {
+            if (_headerText.isNotEmpty) _headerText += '\n';
+            _headerText += line.substring(1).trim();
+            continue;
+          }
+          
+          if (line.startsWith('=')) {
+            String tsCode = line.substring(1).trim();
+            String tsText = '';
+            switch (tsCode) {
+              case '15': tsText = '15 kV AC'; break;
+              case '3': tsText = '3 kV DC'; break;
+              case '2': tsText = 'akumulátor'; break;
+              case '25': tsText = '25 kV AC'; break;
+              default: tsText = 'Neznámá soustava ($tsCode)';
+            }
+            parsedRows.add(TjrRowData(
+              station: '', arrival: '', departure: '', note: '',
+              isTractionChange: true, tractionText: 'Trakce: $tsText'
+            ));
+            continue;
+          }
+
+          List<String> cells = line.split('|').map((p) => p.trim()).toList();
+          if (cells.length >= 6) {
+            String station = cells[3]; // Název stanice
+            String hh = cells[4];
+            String mm = cells[5].padLeft(2, '0'); // Doplnění nuly, pokud je jen "m"
+            String time = '$hh:$mm';
+            
+            parsedRows.add(TjrRowData(
+              station: station,
+              arrival: '',
+              departure: time, // U všech bereme jako odjezd
+              note: '',
+            ));
+          }
+        }
+        
+        // Cílová stanice (poslední v seznamu) logicky nedisponuje odjezdem, přesuneme čas do příjezdu
+        for (int i = parsedRows.length - 1; i >= 0; i--) {
+          if (!parsedRows[i].isTractionChange) {
+            parsedRows[i].arrival = parsedRows[i].departure;
+            parsedRows[i].departure = '';
+            break;
+          }
+        }
+        
+        _tjrData = parsedRows;
+
+      } else if (!isPipeSeparated) {
+        // --- Zpracování Typu 1 (10542.txt - Tabulátory/mezery) ---
+        _isPipeFormat = false;
+        List<TjrRowData> parsedRows = [];
+        
         for (String line in tableLines) {
           List<String> cells = line
               .split(RegExp(r'\t+|\s{2,}'))
@@ -97,14 +149,11 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
           }
 
           if (parsedRows.isNotEmpty && parsedRows.last.station == station) {
-            // Víceřádková stanice - vložíme odjezdový čas (přičemž předchozí už je příjezd)
             parsedRows.last.departure = time;
             if (note.isNotEmpty) parsedRows.last.note = note;
           } else {
-            // Nová stanice. Pokud má jen 1 čas, je to příjezd i odjezd zároveň (pobyt 0)
             parsedRows.add(TjrRowData(
               station: station,
-              // Výchozí stanice nemá příjezd
               arrival: parsedRows.isEmpty ? '' : time, 
               departure: time,
               note: note,
@@ -112,12 +161,27 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
           }
         }
         
-        // Cílová stanice (poslední) nemá odjezd
         if (parsedRows.isNotEmpty) {
           parsedRows.last.departure = '';
         }
         
         _tjrData = parsedRows;
+
+      } else {
+        // --- Zpracování Typu 2 (Záložní Pipe formát, např. 363.txt bez trakce) ---
+        _isPipeFormat = true;
+        _pipeData = [];
+        for (String line in tableLines) {
+          if (line.startsWith('^')) {
+            if (_headerText.isNotEmpty) _headerText += '\n';
+            _headerText += line.substring(1).trim();
+            continue;
+          }
+          List<String> cells = line.split('|').map((p) => p.trim()).toList();
+          if (cells.isNotEmpty && cells.last.isEmpty) cells.removeLast();
+          _pipeData.add(cells);
+        }
+        _pipeMaxCols = _pipeData.fold(0, (max, row) => row.length > max ? row.length : max);
       }
 
       setState(() => _isLoading = false);
@@ -145,7 +209,6 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Aplikace tmavého režimu
     return Scaffold(
       backgroundColor: Colors.black, 
       appBar: AppBar(
@@ -164,7 +227,7 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
     );
   }
 
-Widget _buildContent() {
+  Widget _buildContent() {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -172,12 +235,10 @@ Widget _buildContent() {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
-              // Zajistí, že obsah bude mít minimálně šířku obrazovky
               constraints: BoxConstraints(minWidth: constraints.maxWidth),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  // Zarovnání všeho (hlavičky i tabulky) na střed
                   crossAxisAlignment: CrossAxisAlignment.center, 
                   children: [
                     if (_headerText.isNotEmpty)
@@ -186,7 +247,7 @@ Widget _buildContent() {
                         child: Text(
                           _headerText, 
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          textAlign: TextAlign.center, // Vycentrování textu hlavičky
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     _isPipeFormat ? _buildPipeTable() : _buildTjrTable(),
@@ -200,9 +261,8 @@ Widget _buildContent() {
     );
   }
 
-  // --- STANDARDNÍ TABULKA (10542.txt) ---
+  // --- STANDARDNÍ TABULKA (10542.txt a nově i 031743.txt) ---
   Widget _buildTjrTable() {
-    // Sledování hodin odděleně pro sl. 5 (příjezd) a sl. 7 (odjezd)
     String lastArrHour = '';
     String lastDepHour = '';
     String lastDeparture = '';
@@ -219,10 +279,30 @@ Widget _buildContent() {
     ));
 
     for (var row in _tjrData) {
+      // Vykreslení řádku změny trakce v rámci standardní tabulky
+      if (row.isTractionChange) {
+        rows.add(TableRow(
+          decoration: BoxDecoration(color: Colors.grey.shade800),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: Text(
+                row.tractionText,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 13),
+              ),
+            ),
+            // Vyplnění prázdných buněk pro dorovnání počtu sloupců (8)
+            const SizedBox(), const SizedBox(), const SizedBox(), 
+            const SizedBox(), const SizedBox(), const SizedBox(), const SizedBox(),
+          ],
+        ));
+        continue;
+      }
+
       String travelTime = '';
       String waitTime = '';
 
-      // Jízdní doba (rozdíl mezi odjezdem z minulé stanice a příjezdem sem)
+      // Jízdní doba
       if (lastDeparture.isNotEmpty && row.arrival.isNotEmpty) {
         int diff = _diffMinutes(lastDeparture, row.arrival);
         if (diff > 0) travelTime = diff.toString();
@@ -231,12 +311,11 @@ Widget _buildContent() {
         if (diff > 0) travelTime = diff.toString();
       }
 
-      // Doba pobytu (0 vypíše automaticky, pokud příjezd == odjezd)
+      // Doba pobytu
       if (row.arrival.isNotEmpty && row.departure.isNotEmpty) {
         waitTime = _diffMinutes(row.arrival, row.departure).toString();
       }
 
-      // Volání nezávislých hodin pro Příjezd a Odjezd
       Widget arrWidget = _formatTime(row.arrival, lastArrHour, (newHour) => lastArrHour = newHour);
       Widget depWidget = _formatTime(row.departure, lastDepHour, (newHour) => lastDepHour = newHour);
 
@@ -285,7 +364,7 @@ Widget _buildContent() {
     );
   }
 
-  // --- ZÁLOŽNÍ TABULKA (363.txt) ---
+  // --- ZÁLOŽNÍ TABULKA ---
   Widget _buildPipeTable() {
     if (_pipeMaxCols == 0) return const SizedBox();
     List<TableRow> rows = [];
@@ -358,7 +437,6 @@ Widget _buildContent() {
     String hour = int.parse(parts[0]).toString(); 
     String minute = parts[1];
     
-    // Hodinu vypíšeme vždy, když je jiná než v předchozím řádku TÉHOŽ sloupce
     bool showHour = hour != currentLastHour;
     if (showHour) updateLastHour(hour);
 
@@ -390,11 +468,15 @@ class TjrRowData {
   String arrival;
   String departure;
   String note;
+  bool isTractionChange;
+  String tractionText;
 
   TjrRowData({
     required this.station,
     required this.arrival,
     required this.departure,
     required this.note,
+    this.isTractionChange = false,
+    this.tractionText = '',
   });
 }

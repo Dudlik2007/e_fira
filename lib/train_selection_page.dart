@@ -9,6 +9,9 @@ import 'web_loader.dart';
 import 'dart:io';
 import 'package:package_info_plus/package_info_plus.dart';
 
+// NAHORU PŘIDÁN IMPORT TVÉHO MAIN SOUBORU:
+import 'main.dart'; 
+
 class TrainSelectionPage extends StatefulWidget {
   const TrainSelectionPage({super.key});
 
@@ -25,7 +28,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
   @override
   void initState() {
     super.initState();
-    _loadTrains(); // Načte vlaky při prvním spuštění
+    _loadTrains();
     _loadAppVersion();
   }
 
@@ -36,14 +39,11 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     });
   }
 
-  /// Načítá vlaky ze StorageService a aktualizuje stav.
-  /// Mělo by být voláno vždy, když chceme načíst aktuální data.
   Future<void> _loadTrains() async {
     final loaded = await StorageService.loadTrains();
-
     setState(() {
       trains = loaded;
-      _applyFilter(_filter); // Znovu aplikuje filtr na nově načtená data
+      _applyFilter(_filter);
     });
   }
 
@@ -138,15 +138,12 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
   }
 
   Future<void> _navigateToWebLoader() async {
-    // Používáme push, ale tentokrát čekáme na výsledek (Future<bool?>)
     final bool? shouldRefresh = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (context) => const WebLoaderPage()),
     );
 
-    // Pokud je výsledek 'true', znamená to, že došlo k úspěšné synchronizaci
     if (shouldRefresh == true) {
-      // Znovu načti vlaky, aby se zobrazily nové/aktualizované údaje
       await _loadTrains();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -163,12 +160,26 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
         foregroundColor: Colors.white,
-        title: const Text("Výběr vlaku"),
+        
+        // --- ZDE JE SKRYTÝ NÁVRAT NA WELCOME SCREEN ---
+        title: GestureDetector(
+          onLongPress: () {
+            // Natvrdo načte WelcomeScreen a smaže historii
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              (Route<dynamic> route) => false,
+            );
+          },
+          child: const Text("Výběr vlaku"),
+        ),
+        // ----------------------------------------------
+
         actions: [
           IconButton(
             icon: const Icon(Icons.cloud_sync),
             tooltip: "Nastavení a synchronizace webu",
-            onPressed: _navigateToWebLoader, // Voláme novou metodu
+            onPressed: _navigateToWebLoader,
           ),
           IconButton(
             icon: const Icon(Icons.download),
@@ -196,14 +207,13 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                   MaterialPageRoute(
                     builder: (context) => TrainEditListPage(trains: trains),
                   ),
-                ).then((_) => _loadTrains()); // Editor by také měl vyvolat znovunačtení
+                ).then((_) => _loadTrains());
               },
             ),
         ],
       ),
       body: Column(
         children: [
-          // 🔍 Filtrovací pole
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -222,7 +232,6 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
               onChanged: _applyFilter,
             ),
           ),
-
           Expanded(
             child: trains.isEmpty
                 ? const Center(
@@ -289,7 +298,6 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                     },
                   ),
           ),
-
           const SizedBox(height: 8),
           Center(
             child: Text(
