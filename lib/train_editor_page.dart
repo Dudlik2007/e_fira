@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'report_data.dart';
+import 'package:drift/drift.dart' as drift; // Nutné pro drift.Value
+import 'database/app_database.dart'; // Tvá databáze
 import 'stations_database.dart'; // Databáze stanic
 
 class TrainEditorPage extends StatefulWidget {
-  final ReportData train;
-  final Future<void> Function(ReportData) onSave;
+  final Train? train; // Typ změněn z ReportData na Drift Train
+  final Future<void> Function(TrainsCompanion) onSave;
 
   const TrainEditorPage({
     super.key,
@@ -18,19 +19,44 @@ class TrainEditorPage extends StatefulWidget {
 
 class _TrainEditorPageState extends State<TrainEditorPage> {
   final _formKey = GlobalKey<FormState>();
-  late ReportData _edited;
+  
+  // Lokální stavové proměnné pro úpravy
+  String? trainName;
+  int? trainNumber;
+  int? maxSpeed;
+  int? trainLength;
+  String? trainWheels;
+  String? tjrFileName;
 
-  // Controllery pro Brzdy
+  int? brakeTypeD;
+  int? brakeTypeK;
+  String? brakeMode;
+  int? brakingModeP;
+  int? brakingModeR;
+  int? brakingModeRMg;
+
+  String? departureStation;
+  String? currentStation;
+  String? destinationStation;
+  String? uzbLocation;
+  String? uzbPerformedBy;
+  String? jzbLocation;
+  String? jzbPerformedBy;
+
+  String? nbuStatus;
+  String? doorControlStatus;
+  String? powerSupplyStatus;
+  String? highSpeedCarsStatus;
+
+  // Controllery pro Brzdy a Hmotnosti
   late TextEditingController _actualCtrl;
   late TextEditingController _requiredCtrl;
   late TextEditingController _missingCtrl;
 
-  // Controllery pro Počty vozidel
   late TextEditingController _activeVehiclesCountCtrl;
   late TextEditingController _transportVehiclesCountCtrl;
   late TextEditingController _totalVehiclesCountCtrl;
 
-  // Controllery pro Hmotnosti vozidel
   late TextEditingController _activeVehiclesWeightCtrl;
   late TextEditingController _transportVehiclesWeightCtrl;
   late TextEditingController _totalVehiclesWeightCtrl;
@@ -38,19 +64,49 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
   @override
   void initState() {
     super.initState();
-    _edited = widget.train;
+    final t = widget.train;
 
-    _actualCtrl = TextEditingController(text: _edited.brakingPercentageActual);
-    _requiredCtrl = TextEditingController(text: _edited.brakingPercentageRequired);
-    _missingCtrl = TextEditingController(text: _edited.brakingPercentageMissing);
+    // Inicializace stavových proměnných
+    trainName = t?.trainName ?? "Nový vlak";
+    trainNumber = t?.trainNumber;
+    maxSpeed = t?.maxSpeed;
+    trainLength = t?.trainLength;
+    trainWheels = t?.trainWheels;
+    tjrFileName = t?.tjrFileName;
 
-    _activeVehiclesCountCtrl = TextEditingController(text: _edited.activeVehiclesCount.toString());
-    _transportVehiclesCountCtrl = TextEditingController(text: _edited.transportVehiclesCount.toString());
-    _totalVehiclesCountCtrl = TextEditingController(text: _edited.totalVehiclesCount.toString());
+    brakeTypeD = t?.brakeTypeD;
+    brakeTypeK = t?.brakeTypeK;
+    brakeMode = t?.brakeMode;
+    brakingModeP = t?.brakingModeP;
+    brakingModeR = t?.brakingModeR;
+    brakingModeRMg = t?.brakingModeRMg;
 
-    _activeVehiclesWeightCtrl = TextEditingController(text: _edited.activeVehiclesWeight.toString());
-    _transportVehiclesWeightCtrl = TextEditingController(text: _edited.transportVehiclesWeight.toString());
-    _totalVehiclesWeightCtrl = TextEditingController(text: _edited.totalVehiclesWeight.toString());
+    departureStation = t?.departureStation;
+    currentStation = t?.currentStation;
+    destinationStation = t?.destinationStation;
+
+    uzbLocation = t?.uzbLocation;
+    uzbPerformedBy = t?.uzbPerformedBy;
+    jzbLocation = t?.jzbLocation;
+    jzbPerformedBy = t?.jzbPerformedBy;
+
+    nbuStatus = t?.nbuStatus;
+    doorControlStatus = t?.doorControlStatus;
+    powerSupplyStatus = t?.powerSupplyStatus;
+    highSpeedCarsStatus = t?.highSpeedCarsStatus;
+
+    // Inicializace controllerů pro výpočty
+    _actualCtrl = TextEditingController(text: t?.brakingPercentageActual?.toString() ?? '');
+    _requiredCtrl = TextEditingController(text: t?.brakingPercentageRequired?.toString() ?? '');
+    _missingCtrl = TextEditingController(text: t?.brakingPercentageMissing?.toString() ?? '');
+
+    _activeVehiclesCountCtrl = TextEditingController(text: t?.activeVehiclesCount?.toString() ?? '');
+    _transportVehiclesCountCtrl = TextEditingController(text: t?.transportVehiclesCount?.toString() ?? '');
+    _totalVehiclesCountCtrl = TextEditingController(text: t?.totalVehiclesCount?.toString() ?? '');
+
+    _activeVehiclesWeightCtrl = TextEditingController(text: t?.activeVehiclesWeight?.toString() ?? '');
+    _transportVehiclesWeightCtrl = TextEditingController(text: t?.transportVehiclesWeight?.toString() ?? '');
+    _totalVehiclesWeightCtrl = TextEditingController(text: t?.totalVehiclesWeight?.toString() ?? '');
   }
 
   @override
@@ -58,15 +114,12 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     _actualCtrl.dispose();
     _requiredCtrl.dispose();
     _missingCtrl.dispose();
-
     _activeVehiclesCountCtrl.dispose();
     _transportVehiclesCountCtrl.dispose();
     _totalVehiclesCountCtrl.dispose();
-
     _activeVehiclesWeightCtrl.dispose();
     _transportVehiclesWeightCtrl.dispose();
     _totalVehiclesWeightCtrl.dispose();
-
     super.dispose();
   }
 
@@ -79,7 +132,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
 
     if (_missingCtrl.text != missingStr) {
       _missingCtrl.text = missingStr;
-      _edited = _edited.copyWith(brakingPercentageMissing: missingStr);
     }
   }
 
@@ -87,9 +139,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     final active = int.tryParse(_activeVehiclesCountCtrl.text) ?? 0;
     final transport = int.tryParse(_transportVehiclesCountCtrl.text) ?? 0;
     final total = active + transport;
-
     _totalVehiclesCountCtrl.text = total.toString();
-    _edited = _edited.copyWith(totalVehiclesCount: total);
   }
 
   void _recalcTotalVehiclesWeight() {
@@ -98,17 +148,69 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     final total = active + transport;
 
     final totalStr = total.toStringAsFixed(total.truncateToDouble() == total ? 0 : 1);
-
     _totalVehiclesWeightCtrl.text = totalStr;
-    _edited = _edited.copyWith(totalVehiclesWeight: total);
   }
 
   Future<void> _save() async {
-    await widget.onSave(_edited);
+    // Sestavíme tzv. Companion (bezpečný balíček změn pro databázi Drift)
+    final companion = TrainsCompanion(
+      // Pokud editujeme existující vlak, předáme jeho ID, jinak necháme Drift vygenerovat nové
+      id: widget.train == null ? const drift.Value.absent() : drift.Value(widget.train!.id),
+      
+      trainName: drift.Value(trainName),
+      trainNumber: drift.Value(trainNumber),
+      maxSpeed: drift.Value(maxSpeed),
+      trainLength: drift.Value(trainLength),
+      trainWheels: drift.Value(trainWheels),
+      tjrFileName: drift.Value(tjrFileName),
+
+      brakeTypeD: drift.Value(brakeTypeD),
+      brakeTypeK: drift.Value(brakeTypeK),
+      brakeMode: drift.Value(brakeMode),
+      brakingModeP: drift.Value(brakingModeP),
+      brakingModeR: drift.Value(brakingModeR),
+      brakingModeRMg: drift.Value(brakingModeRMg),
+      
+      // Vytažení a naparsování hodnot z controllerů
+      brakingPercentageActual: drift.Value(int.tryParse(_actualCtrl.text)),
+      brakingPercentageRequired: drift.Value(int.tryParse(_requiredCtrl.text)),
+      brakingPercentageMissing: drift.Value(int.tryParse(_missingCtrl.text)),
+
+      activeVehiclesCount: drift.Value(int.tryParse(_activeVehiclesCountCtrl.text)),
+      transportVehiclesCount: drift.Value(int.tryParse(_transportVehiclesCountCtrl.text)),
+      totalVehiclesCount: drift.Value(int.tryParse(_totalVehiclesCountCtrl.text)),
+
+      activeVehiclesWeight: drift.Value(double.tryParse(_activeVehiclesWeightCtrl.text)),
+      transportVehiclesWeight: drift.Value(double.tryParse(_transportVehiclesWeightCtrl.text)),
+      totalVehiclesWeight: drift.Value(double.tryParse(_totalVehiclesWeightCtrl.text)),
+
+      departureStation: drift.Value(departureStation),
+      currentStation: drift.Value(currentStation),
+      destinationStation: drift.Value(destinationStation),
+
+      uzbLocation: drift.Value(uzbLocation),
+      uzbPerformedBy: drift.Value(uzbPerformedBy),
+      jzbLocation: drift.Value(jzbLocation),
+      jzbPerformedBy: drift.Value(jzbPerformedBy),
+
+      nbuStatus: drift.Value(nbuStatus),
+      doorControlStatus: drift.Value(doorControlStatus),
+      powerSupplyStatus: drift.Value(powerSupplyStatus),
+      highSpeedCarsStatus: drift.Value(highSpeedCarsStatus),
+      
+      // Skrytá pole, která necháváme tak, jak byla (např. brakePercent, topSpeedAllowed)
+      brakePercent: drift.Value(widget.train?.brakePercent),
+      topSpeedAllowed: drift.Value(widget.train?.topSpeedAllowed),
+      trainCars: drift.Value(widget.train?.trainCars),
+    );
+
+    await widget.onSave(companion);
     if (!mounted) return;
     Navigator.pop(context);
   }
 
+  // ============== HELPER METODY PRO KRESLENÍ UI ==============
+  
   Widget _buildField({
     required String label,
     String? initial,
@@ -222,7 +324,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: DropdownButtonFormField<String>(
-        value: currentValue,
+        initialValue: currentValue,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
@@ -331,16 +433,16 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow2(
                     _buildField(
                       label: "Název vlaku",
-                      initial: _edited.trainName,
-                      onChanged: (v) => _edited = _edited.copyWith(trainName: v),
+                      initial: trainName,
+                      onChanged: (v) => trainName = v,
                     ),
                     _buildField(
                       label: "Číslo vlaku",
-                      initial: _edited.trainNumber,
+                      initial: trainNumber?.toString(),
+                      isNumber: true,
                       onChanged: (v) {
-                        // Přidán setState, aby se po napsání čísla vlaku hned zaktualizoval našeptávač u TJŘ
                         setState(() {
-                          _edited = _edited.copyWith(trainNumber: v);
+                          trainNumber = int.tryParse(v);
                         });
                       },
                     ),
@@ -349,32 +451,29 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow2(
                     _buildField(
                       label: "Nejvyšší rychlost vlaku",
-                      initial: _edited.maxSpeed,
+                      initial: maxSpeed?.toString(),
                       isNumber: true,
-                      onChanged: (v) => _edited = _edited.copyWith(maxSpeed: v),
+                      onChanged: (v) => maxSpeed = int.tryParse(v),
                     ),
                     _buildField(
                       label: "Délka vlaku (m)",
-                      initial: _edited.trainLength,
+                      initial: trainLength?.toString(),
                       isNumber: true,
-                      onChanged: (v) => _edited = _edited.copyWith(trainLength: v),
+                      onChanged: (v) => trainLength = int.tryParse(v),
                     ),
                   ),
                   const SizedBox(height: 4),
                   _buildRow2(
                     _buildField(
                       label: "Počet náprav",
-                      initial: _edited.trainWheels,
-                      isNumber: true,
-                      onChanged: (v) => _edited = _edited.copyWith(trainWheels: v),
+                      initial: trainWheels,
+                      onChanged: (v) => trainWheels = v,
                     ),
-                    // VRÁCENO: Soubor TJŘ s našeptávačem provázaným na Číslo vlaku
                     _buildAutocompleteField(
                       label: "Název souboru TJŘ",
-                      initialValue: _edited.tjrFileName ?? '',
-                      // Zde je to kouzlo: Pokud je zadané číslo vlaku, nabízíme ho jako možnost pro TJŘ
-                      suggestions: _edited.trainNumber.isNotEmpty ? [_edited.trainNumber] : [],
-                      onChanged: (v) => _edited = _edited.copyWith(tjrFileName: v),
+                      initialValue: tjrFileName ?? '',
+                      suggestions: trainNumber != null ? [trainNumber.toString()] : [],
+                      onChanged: (v) => tjrFileName = v,
                     ),
                   ),
                 ]),
@@ -383,37 +482,42 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow3(
                     _buildField(
                       label: "Typ brzdy D (počet)",
-                      initial: _edited.brakeTypeD,
-                      onChanged: (v) => _edited = _edited.copyWith(brakeTypeD: v),
+                      initial: brakeTypeD?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakeTypeD = int.tryParse(v),
                     ),
                     _buildField(
                       label: "Typ brzdy K (počet)",
-                      initial: _edited.brakeTypeK,
-                      onChanged: (v) => _edited = _edited.copyWith(brakeTypeK: v),
+                      initial: brakeTypeK?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakeTypeK = int.tryParse(v),
                     ),
                     _buildDropdownField(
                       label: "Stanovený režim brzdění",
-                      value: _edited.brakeMode,
+                      value: brakeMode,
                       items: const ['P', 'R', 'R+Mg'],
-                      onChanged: (v) => _edited = _edited.copyWith(brakeMode: v ?? ''),
+                      onChanged: (v) => brakeMode = v,
                     ),
                   ),
                   const SizedBox(height: 4),
                   _buildRow3(
                     _buildField(
                       label: "Režim P (počet)",
-                      initial: _edited.brakingModeP,
-                      onChanged: (v) => _edited = _edited.copyWith(brakingModeP: v),
+                      initial: brakingModeP?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeP = int.tryParse(v),
                     ),
                     _buildField(
                       label: "Režim R (počet)",
-                      initial: _edited.brakingModeR,
-                      onChanged: (v) => _edited = _edited.copyWith(brakingModeR: v),
+                      initial: brakingModeR?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeR = int.tryParse(v),
                     ),
                     _buildField(
                       label: "Režim R+Mg (počet)",
-                      initial: _edited.brakingModeRMg,
-                      onChanged: (v) => _edited = _edited.copyWith(brakingModeRMg: v),
+                      initial: brakingModeRMg?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeRMg = int.tryParse(v),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -423,7 +527,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _actualCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(brakingPercentageActual: v);
                         _recalcMissingBrakes();
                       },
                     ),
@@ -432,7 +535,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _requiredCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(brakingPercentageRequired: v);
                         _recalcMissingBrakes();
                       },
                     ),
@@ -440,7 +542,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       label: "Chybějící brzd. %",
                       controller: _missingCtrl,
                       isNumber: true,
-                      onChanged: (v) => _edited = _edited.copyWith(brakingPercentageMissing: v),
+                      onChanged: (v) {},
                     ),
                   ),
                 ]),
@@ -452,7 +554,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _activeVehiclesCountCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(activeVehiclesCount: int.tryParse(v) ?? 0);
                         _recalcTotalVehiclesCount();
                       },
                     ),
@@ -461,7 +562,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _activeVehiclesWeightCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(activeVehiclesWeight: double.tryParse(v) ?? 0.0);
                         _recalcTotalVehiclesWeight();
                       },
                     ),
@@ -472,7 +572,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _transportVehiclesCountCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(transportVehiclesCount: int.tryParse(v) ?? 0);
                         _recalcTotalVehiclesCount();
                       },
                     ),
@@ -481,7 +580,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _transportVehiclesWeightCtrl,
                       isNumber: true,
                       onChanged: (v) {
-                        _edited = _edited.copyWith(transportVehiclesWeight: double.tryParse(v) ?? 0.0);
                         _recalcTotalVehiclesWeight();
                       },
                     ),
@@ -492,14 +590,14 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                       controller: _totalVehiclesCountCtrl,
                       isNumber: true,
                       readOnly: true,
-                      onChanged: (v) => _edited = _edited.copyWith(totalVehiclesCount: int.tryParse(v) ?? 0),
+                      onChanged: (v) {},
                     ),
                     _buildField(
                       label: "Hmotnost celkem (t) (automaticky)",
                       controller: _totalVehiclesWeightCtrl,
                       isNumber: true,
                       readOnly: true,
-                      onChanged: (v) => _edited = _edited.copyWith(totalVehiclesWeight: double.tryParse(v) ?? 0.0),
+                      onChanged: (v) {},
                     ),
                   ),
                 ]),
@@ -508,21 +606,21 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow3(
                     _buildAutocompleteField(
                       label: "Výchozí ŽST",
-                      initialValue: _edited.departureStation,
+                      initialValue: departureStation ?? '',
                       suggestions: czStationsList,
-                      onChanged: (v) => _edited = _edited.copyWith(departureStation: v),
+                      onChanged: (v) => departureStation = v,
                     ),
                     _buildAutocompleteField(
                       label: "Sepsáno v ŽST",
-                      initialValue: _edited.currentStation,
+                      initialValue: currentStation ?? '',
                       suggestions: czStationsList,
-                      onChanged: (v) => _edited = _edited.copyWith(currentStation: v),
+                      onChanged: (v) => currentStation = v,
                     ),
                     _buildAutocompleteField(
                       label: "Konečná ŽST",
-                      initialValue: _edited.destinationStation,
+                      initialValue: destinationStation ?? '',
                       suggestions: czStationsList,
-                      onChanged: (v) => _edited = _edited.copyWith(destinationStation: v),
+                      onChanged: (v) => destinationStation = v,
                     ),
                   ),
                 ]),
@@ -531,27 +629,27 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow2(
                     _buildAutocompleteField(
                       label: "Kde provedena ÚZB",
-                      initialValue: _edited.uzbLocation,
+                      initialValue: uzbLocation ?? '',
                       suggestions: czStationsList,
-                      onChanged: (v) => _edited = _edited.copyWith(uzbLocation: v),
+                      onChanged: (v) => uzbLocation = v,
                     ),
                     _buildField(
                       label: "Kým provedena ÚZB (Sepsal)",
-                      initial: _edited.uzbPerformedBy,
-                      onChanged: (v) => _edited = _edited.copyWith(uzbPerformedBy: v),
+                      initial: uzbPerformedBy,
+                      onChanged: (v) => uzbPerformedBy = v,
                     ),
                   ),
                   _buildRow2(
                     _buildAutocompleteField(
                       label: "Kde provedena JZB",
-                      initialValue: _edited.jzbLocation,
+                      initialValue: jzbLocation ?? '',
                       suggestions: czStationsList,
-                      onChanged: (v) => _edited = _edited.copyWith(jzbLocation: v),
+                      onChanged: (v) => jzbLocation = v,
                     ),
                     _buildField(
                       label: "Kým provedena JZB",
-                      initial: _edited.jzbPerformedBy,
-                      onChanged: (v) => _edited = _edited.copyWith(jzbPerformedBy: v),
+                      initial: jzbPerformedBy,
+                      onChanged: (v) => jzbPerformedBy = v,
                     ),
                   ),
                 ]),
@@ -560,27 +658,27 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                   _buildRow2(
                     _buildField(
                       label: "NBÜ (Přemostění záchran. brzdy)",
-                      initial: _edited.nbuStatus,
-                      onChanged: (v) => _edited = _edited.copyWith(nbuStatus: v),
+                      initial: nbuStatus,
+                      onChanged: (v) => nbuStatus = v,
                     ),
                     _buildDropdownField(
                       label: "Systémy otvírání dveří",
-                      value: _edited.doorControlStatus,
+                      value: doorControlStatus,
                       items: const ['TB 5', 'TB 0', 'TB-S', 'SSOD', 'CODS', 'LAT'],
-                      onChanged: (v) => _edited = _edited.copyWith(doorControlStatus: v ?? ''),
+                      onChanged: (v) => doorControlStatus = v,
                     ),
                   ),
                   _buildRow2(
                     _buildField(
                       label: "Napájení na 25 kV AC",
-                      initial: _edited.powerSupplyStatus,
-                      onChanged: (v) => _edited = _edited.copyWith(powerSupplyStatus: v),
+                      initial: powerSupplyStatus,
+                      onChanged: (v) => powerSupplyStatus = v,
                     ),
                     _buildAutocompleteField(
                       label: "Rychlostní profil (Horní rychlostníky)",
-                      initialValue: _edited.highSpeedCarsStatus,
+                      initialValue: highSpeedCarsStatus ?? '',
                       suggestions: const ['PASS 1', 'PASS 2'],
-                      onChanged: (v) => _edited = _edited.copyWith(highSpeedCarsStatus: v),
+                      onChanged: (v) => highSpeedCarsStatus = v,
                     ),
                   ),
                 ]),

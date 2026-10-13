@@ -1,30 +1,27 @@
-// lib/train_edit_list_page.dart
 import 'package:flutter/material.dart';
-import 'report_data.dart';
-import 'storage_service.dart';
+import 'package:drift/drift.dart' as drift; // Přidáno pro Drift
+import 'database/app_database.dart'; // Tvá databáze
+import 'database/db_provider.dart';  // Zde máš late AppDatabase db;
 import 'train_editor_page.dart';
 
 class TrainEditListPage extends StatefulWidget {
-  final List<ReportData> trains;
-
-  const TrainEditListPage({super.key, required this.trains});
+  const TrainEditListPage({super.key}); // Již nepřijímá list zvenčí!
 
   @override
   State<TrainEditListPage> createState() => _TrainEditListPageState();
 }
 
 class _TrainEditListPageState extends State<TrainEditListPage> {
-  late List<ReportData> _trains;
-  late List<ReportData> _filteredTrains;
+  List<Train> _trains = [];
+  List<Train> _filteredTrains = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _trains = List.from(widget.trains);
-    _filteredTrains = List.from(_trains);
     _searchController.addListener(_onSearchChanged);
+    _loadTrains(); // Načteme rovnou z DB
   }
 
   @override
@@ -33,22 +30,28 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
     super.dispose();
   }
 
+  // Načtení dat ze SQLite
+  Future<void> _loadTrains() async {
+    final loaded = await db.getAllTrains();
+    setState(() {
+      _trains = loaded;
+      _onSearchChanged();
+    });
+  }
+
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredTrains = _trains.where((train) {
-        final name = train.trainName.toLowerCase();
-        final number = train.trainNumber.toLowerCase();
+        final name = (train.trainName ?? '').toLowerCase();
+        final number = (train.trainNumber?.toString() ?? '').toLowerCase();
         return name.contains(query) || number.contains(query);
       }).toList();
     });
   }
 
-  Future<void> _saveTrains() async {
-    await StorageService.saveTrains(_trains);
-  }
-
   void _showMessage(String text) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
@@ -58,19 +61,17 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
   }
 
   void _editTrain(int index) async {
+    final trainToEdit = _filteredTrains[index];
+    
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
-          train: _filteredTrains[index],
-          onSave: (updated) async {
-            final originalIndex = _trains.indexOf(_filteredTrains[index]);
-            setState(() {
-              _trains[originalIndex] = updated;
-              _onSearchChanged();
-            });
-            await _saveTrains();
+          train: trainToEdit,
+          onSave: (updatedCompanion) async {
+            await db.updateTrain(updatedCompanion); // Uložíme do DB
             _showMessage("Změny byly uloženy");
+            _loadTrains(); // Refresh seznamu
           },
         ),
       ),
@@ -101,65 +102,22 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
 
     if (confirm == true) {
       final trainToRemove = _filteredTrains[index];
-      setState(() {
-        _trains.remove(trainToRemove);
-        _onSearchChanged();
-      });
-      await _saveTrains();
+      await db.deleteTrain(trainToRemove); // Smažeme z DB
       _showMessage("Vlak byl smazán");
+      _loadTrains(); // Refresh seznamu
     }
   }
 
   void _addTrain() async {
-    final newTrain = ReportData(
-      trainName: "Nový vlak",
-      trainNumber: "",
-      maxSpeed: "0",
-      trainLength: "0",
-      trainWheels: "",
-      trainCars: 0,
-      brakeTypeD: "0",
-      brakeTypeK: "0",
-      brakeMode: "",
-      brakingModeP: "0",
-      brakingModeR: "0",
-      brakingModeRMg: "0",
-      brakePercent: "0",
-      brakingPercentageActual: "0",
-      brakingPercentageRequired: "0",
-      brakingPercentageMissing: "0",
-      activeVehiclesCount: 0,
-      transportVehiclesCount: 0,
-      totalVehiclesCount: 0,
-      activeVehiclesWeight: 0.0,
-      transportVehiclesWeight: 0.0,
-      totalVehiclesWeight: 0.0,
-      departureStation: "",
-      currentStation: "",
-      destinationStation: "",
-      uzbLocation: "",
-      uzbPerformedBy: "",
-      jzbLocation: "",
-      jzbPerformedBy: "",
-      nbuStatus: "",
-      topSpeedAllowed: "",
-      doorControlStatus: "",
-      powerSupplyStatus: "",
-      highSpeedCarsStatus: "",
-    );
-
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TrainEditorPage(
-          train: newTrain,
-          onSave: (created) async {
-            setState(() {
-              _trains.add(created);
-              _onSearchChanged();
-            });
-            await _saveTrains();
+          train: null, // null znamená nový vlak
+          onSave: (newCompanion) async {
+            await db.insertTrain(newCompanion); // Vytvoříme v DB
             _showMessage("Nový vlak byl přidán");
+            _loadTrains(); // Refresh seznamu
           },
         ),
       ),
@@ -200,24 +158,24 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
             elevation: 0,
             title: _isSearching
                 ? TextField(
-              controller: _searchController,
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              cursorColor: Colors.blueAccent,
-              decoration: const InputDecoration(
-                hintText: "Hledat vlak...",
-                hintStyle: TextStyle(color: Colors.white54),
-                border: InputBorder.none,
-              ),
-            )
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    cursorColor: Colors.blueAccent,
+                    decoration: const InputDecoration(
+                      hintText: "Hledat vlak...",
+                      hintStyle: TextStyle(color: Colors.white54),
+                      border: InputBorder.none,
+                    ),
+                  )
                 : const Text(
-              "Editor vlaků",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
+                    "Editor vlaků",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
             centerTitle: true,
             actions: [
               IconButton(
@@ -240,45 +198,50 @@ class _TrainEditListPageState extends State<TrainEditListPage> {
       ),
       body: _filteredTrains.isEmpty
           ? const Center(
-        child: Text(
-          "Žádné vlaky k zobrazení",
-          style: TextStyle(color: Colors.white70, fontSize: 16),
-        ),
-      )
+              child: Text(
+                "Žádné vlaky k zobrazení",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            )
           : ListView.builder(
-        itemCount: _filteredTrains.length,
-        itemBuilder: (context, index) {
-          final train = _filteredTrains[index];
-          return Card(
-            color: const Color(0xFF1E1E1E),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              itemCount: _filteredTrains.length,
+              itemBuilder: (context, index) {
+                final train = _filteredTrains[index];
+                
+                final tName = train.trainName ?? "Neznámý";
+                final tNum = train.trainNumber?.toString() ?? "???";
+                final tSpeed = train.maxSpeed?.toString() ?? "N/A";
+
+                return Card(
+                  color: const Color(0xFF1E1E1E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    title: Text(
+                      "$tName ($tNum)",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Rychlost: $tSpeed km/h",
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () => _deleteTrain(index),
+                    ),
+                    onTap: () => _editTrain(index),
+                  ),
+                );
+              },
             ),
-            margin:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 10),
-              title: Text(
-                "${train.trainName} (${train.trainNumber})",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(
-                "Rychlost: ${train.maxSpeed} km/h",
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                onPressed: () => _deleteTrain(index),
-              ),
-              onTap: () => _editTrain(index),
-            ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTrain,
         tooltip: 'Přidat vlak',

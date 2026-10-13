@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
 import 'app_theme.dart';
-
 import 'train_selection_page.dart';
 import 'settings_screen.dart';
 import 'driver_dashboard.dart';
 import 'license_screen.dart';
+
+// ============================================================
+// NOVÉ IMPORTY PRO DATABÁZI A SYNCHRONIZACI
+// ============================================================
+// Uprav cesty k souborům podle tvé reálné struktury složek!
+import 'database/db_provider.dart'; 
+import 'database/DatabaseUpdater.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,19 +22,46 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  final prefs = await SharedPreferences.getInstance();
+  // ============================================================
+  // NOVÉ: INICIALIZACE LOKÁLNÍ DATABÁZE (Z Fáze 4)
+  // ============================================================
+  // Tímto zajistíme, že spojení se SQLite je otevřené hned od startu.
+  await initDatabase(); 
 
+  final prefs = await SharedPreferences.getInstance();
   final skipWelcome = prefs.getBool('skipWelcome') ?? false;
   final darkMode = prefs.getBool('darkMode') ?? false;
 
   // Načtení uloženého režimu
   appDarkMode.value = darkMode;
 
+  // ============================================================
+  // NOVÉ: SPUŠTĚNÍ SYNCHRONIZACE NA POZADÍ
+  // ============================================================
+  // Voláme funkci bez 'await'. Tím pádem se hlavní vlákno nezastaví,
+  // aplikace se okamžitě spustí a data se zaktualizují na pozadí.
+  _runStartupSync();
+
   runApp(
     MyApp(
       skipWelcome: skipWelcome,
     ),
   );
+}
+
+// ============================================================
+// FUNKCE PRO AUTOMATICKOU AKTUALIZACI DAT
+// ============================================================
+Future<void> _runStartupSync() async {
+  print("Spouštím automatickou kontrolu aktualizací dat...");
+  try {
+    // Zavolá naši sjednocenou třídu. Sama si zkontroluje, jestli má uložené 
+    // URL adresy. Pokud ano, stáhne novou databázi i eBulu.
+    String result = await DatabaseUpdater.syncAllData();
+    print("Výsledek automatické synchronizace: $result");
+  } catch (e) {
+    print("Chyba při automatické synchronizaci: $e");
+  }
 }
 
 // ============================================================
@@ -413,7 +445,7 @@ class WelcomeScreen extends StatelessWidget {
           ),
           content: const Text(
             'Tato aplikace slouží pro vytváření a správu zpráv o brzdění vlaků.\n\n'
-            'Podporuje načítání brzděnek z CSV souborů a dat pro eBulu z TXT souborů.\n\n'
+            'Podporuje stahování databází a dat pro eBulu ze serveru.\n\n'
             'Součástí aplikace je také modul pro sledování licencí strojvedoucích, '
             'ujetých kilometrů a žebříčku strojvedoucích.',
           ),

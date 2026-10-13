@@ -1,15 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+import 'database/app_database.dart'; 
+import 'database/db_provider.dart';  
+import 'settings_screen.dart';       
+
 import 'report_page.dart';
-import 'report_data.dart';
 import 'storage_service.dart';
 import 'train_edit_list_page.dart';
 import 'train_tjr_view_page.dart';
-import 'web_loader.dart';
-import 'dart:io';
-import 'package:package_info_plus/package_info_plus.dart';
-
-// NAHORU PŘIDÁN IMPORT TVÉHO MAIN SOUBORU:
 import 'main.dart'; 
 
 class TrainSelectionPage extends StatefulWidget {
@@ -20,8 +21,8 @@ class TrainSelectionPage extends StatefulWidget {
 }
 
 class _TrainSelectionPageState extends State<TrainSelectionPage> {
-  List<ReportData> trains = [];
-  List<ReportData> filteredTrains = [];
+  List<Train> trains = [];
+  List<Train> filteredTrains = [];
   String _appVersion = "";
   String _filter = "";
 
@@ -40,7 +41,9 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
   }
 
   Future<void> _loadTrains() async {
-    final loaded = await StorageService.loadTrains();
+    final loaded = await db.getAllTrains();
+    if (!mounted) return;
+    
     setState(() {
       trains = loaded;
       _applyFilter(_filter);
@@ -51,48 +54,111 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     setState(() {
       _filter = query;
       filteredTrains = trains.where((t) {
-        return t.trainName.toLowerCase().contains(query.toLowerCase()) ||
-            t.trainNumber.toLowerCase().contains(query.toLowerCase());
+        final name = t.trainName?.toLowerCase() ?? '';
+        final number = t.trainNumber?.toString().toLowerCase() ?? '';
+        
+        return name.contains(query.toLowerCase()) ||
+            number.contains(query.toLowerCase());
       }).toList();
     });
   }
 
-  Future<void> _exportTrains() async {
-    final path = await StorageService.exportToDownloads(trains);
+  // ==========================================
+  // NOVÉ: EXPORT A IMPORT DATABÁZE (SQLITE)
+  // ==========================================
+
+  Future<void> _exportDatabase() async {
+    final destPath = await StorageService.exportDatabase();
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Exportováno do: $path")),
-    );
+    if (destPath != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Databáze úspěšně exportována do:\n$destPath"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Export databáze selhal (chybí oprávnění nebo složka)"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  Future<void> _importTrains() async {
+  Future<void> _importDatabase() async {
+    // 1. Zobrazíme varování, protože přepisujeme všechna lokální data
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Importovat databázi?"),
+        content: const Text(
+            "Tato akce kompletně a nevratně přepíše vaši současnou databázi vlaků. "
+            "Opravdu chcete pokračovat?"
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Zrušit"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Přepsat data",
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // 2. Výběr souboru
     try {
       final result = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Vyber CSV soubor vlaků',
+        dialogTitle: 'Vyber SQLite databázi',
         type: FileType.custom,
-        allowedExtensions: ['csv'],
+        allowedExtensions: ['sqlite', 'db'],
         withData: true,
       );
+      
       if (result == null) return;
-
+      
       final pickedFile = result.files.single;
       final bytes = await _readPickedFile(pickedFile);
+      
       if (bytes == null) {
         _showImportMessage('Soubor se nepodařilo přečíst.');
         return;
       }
 
-      final imported = await StorageService.importFromBytes(
-        bytes,
-        sourceName: pickedFile.name,
-      );
-      await _loadTrains();
-      _showImportMessage('Importováno vlaků: ${imported.length}');
+      // 3. Provedení importu a následné restartování připojení k databázi
+      final success = await StorageService.importDatabase(bytes);
+      
+      if (success) {
+        _showImportMessage('Databáze byla úspěšně nahrána!', color: Colors.green);
+        // POZOR: Abys viděl nové vlaky, musíme Driftu říct, ať se na ten soubor podívá znovu
+        await _loadTrains(); 
+      } else {
+        _showImportMessage('Chyba při nahrávání databáze.', color: Colors.red);
+      }
+      
     } catch (e) {
-      _showImportMessage('Import CSV selhal: $e');
+      _showImportMessage('Import selhal: $e', color: Colors.red);
     }
   }
+
+  void _showImportMessage(String message, {Color color = Colors.white}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: color),
+    );
+  }
+
+  // ==========================================
 
   Future<void> _importTjrFiles() async {
     final result = await FilePicker.platform.pickFiles(
@@ -130,27 +196,12 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
     return file.readAsBytes();
   }
 
-  void _showImportMessage(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  Future<void> _navigateToWebLoader() async {
-    final bool? shouldRefresh = await Navigator.push<bool>(
+  Future<void> _navigateToSettings() async {
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const WebLoaderPage()),
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
     );
-
-    if (shouldRefresh == true) {
-      await _loadTrains();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Vlaky byly aktualizovány z webu")),
-        );
-      }
-    }
+    await _loadTrains();
   }
 
   @override
@@ -161,10 +212,8 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
         backgroundColor: const Color(0xFF1E1E1E),
         foregroundColor: Colors.white,
         
-        // --- ZDE JE SKRYTÝ NÁVRAT NA WELCOME SCREEN ---
         title: GestureDetector(
           onLongPress: () {
-            // Natvrdo načte WelcomeScreen a smaže historii
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const WelcomeScreen()),
@@ -173,31 +222,33 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
           },
           child: const Text("Výběr vlaku"),
         ),
-        // ----------------------------------------------
 
         actions: [
           IconButton(
             icon: const Icon(Icons.cloud_sync),
             tooltip: "Nastavení a synchronizace webu",
-            onPressed: _navigateToWebLoader,
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: "Importovat vlaky",
-            onPressed: _importTrains,
+            onPressed: _navigateToSettings,
           ),
           IconButton(
             icon: const Icon(Icons.description),
-            tooltip: "Importovat TJŘ soubory",
+            tooltip: "Importovat TJŘ soubory ručně",
             onPressed: _importTjrFiles,
           ),
-          if (Platform.isWindows || Platform.isLinux)
+          
+          // --- PŘIDÁNO ZPĚT TLAČÍTKO PRO IMPORT DATABÁZE ---
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: "Importovat lokální databázi (.sqlite)",
+            onPressed: _importDatabase,
+          ),
+          
+          if (Platform.isWindows || Platform.isLinux) ...[
+            // --- PŘIDÁNO ZPĚT TLAČÍTKO PRO EXPORT DATABÁZE ---
             IconButton(
               icon: const Icon(Icons.upload_file),
-              tooltip: "Exportovat vlaky",
-              onPressed: _exportTrains,
+              tooltip: "Exportovat databázi k odeslání na web",
+              onPressed: _exportDatabase,
             ),
-          if (Platform.isWindows || Platform.isLinux)
             IconButton(
               icon: const Icon(Icons.edit),
               tooltip: "Editor vlaků",
@@ -205,11 +256,12 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => TrainEditListPage(trains: trains),
+                    builder: (context) => const TrainEditListPage(),
                   ),
                 ).then((_) => _loadTrains());
               },
             ),
+          ],
         ],
       ),
       body: Column(
@@ -236,7 +288,7 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
             child: trains.isEmpty
                 ? const Center(
                     child: Text(
-                      "Nenalezeny žádné uložené vlaky",
+                      "Nenalezeny žádné uložené vlaky. Zkontrolujte nastavení.",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
                   )
@@ -244,17 +296,22 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                     itemCount: filteredTrains.length,
                     itemBuilder: (context, index) {
                       final train = filteredTrains[index];
+                      
+                      final tName = train.trainName ?? "Neznámý";
+                      final tNum = train.trainNumber?.toString() ?? "???";
+                      final tSpeed = train.maxSpeed?.toString() ?? "N/A";
+                      
                       return Card(
                         color: const Color(0xFF1E1E1E),
                         margin: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         child: ListTile(
                           title: Text(
-                            "${train.trainName} (${train.trainNumber})",
+                            "$tName ($tNum)",
                             style: const TextStyle(color: Colors.white),
                           ),
                           subtitle: Text(
-                            "Rychlost: ${train.maxSpeed} km/h",
+                            "Rychlost: $tSpeed km/h",
                             style: const TextStyle(color: Colors.white70),
                           ),
                           trailing: Row(
@@ -268,12 +325,12 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ReportPage(data: train),
+                                      builder: (context) => ReportPage(data: train.toReportData()),
                                     ),
                                   ).then((_) => _loadTrains());
                                 },
                               ),
-                              if (train.trainNumber.trim().isNotEmpty)
+                              if (tNum != "???")
                                 IconButton(
                                   icon: const Icon(Icons.description,
                                       color: Colors.amberAccent),
@@ -283,8 +340,8 @@ class _TrainSelectionPageState extends State<TrainSelectionPage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => TrainTjrViewPage(
-                                          trainName: train.trainName,
-                                          trainNumber: train.trainNumber,
+                                          trainName: tName,
+                                          trainNumber: tNum,
                                           tjrFileName: train.tjrFileName ?? '',
                                         ),
                                       ),

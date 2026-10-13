@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_theme.dart';
 
+// Sem později přidáš import tvého DatabaseUpdateru:
+// import 'package:e_fira/database/database_updater.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -21,6 +24,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
+  
+  // Databáze
+  final TextEditingController _dbUrlController = TextEditingController(); // NOVÉ: URL databáze
 
   // ============================================================
   // ŽEBŘÍČEK A FILTROVÁNÍ
@@ -33,14 +39,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<String> _specificLicenses = [];
   String? _selectedDbLicense;
 
-  // MOCK DATABÁZE: Zde se v budoucnu načtou reálná čísla z Firebase/DB
+  // MOCK DATABÁZE
   final List<String> _dbLicensesMock = [
-    'MASNA-001',
-    'MASNA-002',
-    'MASNA-003',
-    'MASNA-004',
-    'MASNA-005',
-    'INSTRUKTOR-1',
+    '10124',
+    '10125',
+    '10126',
+    '10127',
+    '10128',
+    '10129',
+    '330448',
+    '330447',
   ];
 
   List<String> _unlockedVehicles = [];
@@ -73,6 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _nameController.dispose();
     _licenseController.dispose();
     _codeController.dispose();
+    _dbUrlController.dispose(); // NOVÉ
     _rangeFromCtrl.dispose();
     _rangeToCtrl.dispose();
     super.dispose();
@@ -94,6 +103,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       _nameController.text = prefs.getString('driverName') ?? '';
       _licenseController.text = prefs.getString('licenseNumber') ?? '';
+      
+      // NOVÉ: Načtení uložené URL
+      _dbUrlController.text = prefs.getString('server_database_url') ?? '';
 
       // Načtení filtrů žebříčku
       _leaderboardFilter = prefs.getString('leaderboardFilter') ?? 'all';
@@ -132,6 +144,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setString('licenseNumber', _licenseController.text.trim());
     if (!mounted) return;
     _showSnackBar('Údaje průkazu byly uloženy.');
+  }
+
+  // NOVÉ: Funkce pro uložení URL a zavolání stahování
+  Future<void> _saveAndDownloadDb() async {
+    final url = _dbUrlController.text.trim();
+    if (url.isEmpty) {
+      _showSnackBar('Zadejte prosím URL adresu serveru.', color: Colors.red);
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_database_url', url);
+
+    _showSnackBar('URL uložena. Zahajuji stahování databáze...', color: Colors.blue);
+
+    // Zde později odkomentuješ kód, který propojí UI s tvým DatabaseUpdaterem:
+    /*
+    String result = await DatabaseUpdater.downloadDatabaseFromServer();
+    if (!mounted) return;
+    
+    if (result == 'success') {
+      _showSnackBar('Databáze byla úspěšně stažena a je připravena.', color: Colors.green);
+    } else {
+      _showSnackBar(result, color: Colors.red);
+    }
+    */
   }
 
   Future<void> _saveLeaderboardSettings() async {
@@ -249,11 +287,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.remove('driverName');
     await prefs.remove('licenseNumber');
     await prefs.remove('unlockedVehicles');
+    await prefs.remove('server_database_url'); // NOVÉ: Přidal jsem smazání i u DB URL
 
     if (!mounted) return;
     setState(() {
       _nameController.clear();
       _licenseController.clear();
+      _dbUrlController.clear();
       _unlockedVehicles.clear();
     });
     _showSnackBar('Všechna data průkazu byla vymazána.');
@@ -275,11 +315,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Rozdělení rozhraní na základě šířky obrazovky
             final bool isDesktop = constraints.maxWidth >= 850;
             final double contentWidth = isDesktop ? 1200 : 680;
 
-            // Levý sloupec (nebo vrchní na mobilu)
             final List<Widget> leftColumnContent = [
               _buildIntroCard(),
               const SizedBox(height: 14),
@@ -288,9 +326,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildLeaderboardSection(),
             ];
 
-            // Pravý sloupec (nebo spodní na mobilu)
             final List<Widget> rightColumnContent = [
               _buildGeneralSettingsSection(),
+              const SizedBox(height: 14),
+              _buildDatabaseSection(), // NOVÉ: Sekce pro databázi přidána sem
               const SizedBox(height: 14),
               _buildUnlockSection(),
               const SizedBox(height: 14),
@@ -375,6 +414,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(_darkMode ? 'Používá se tmavé barevné schéma.' : 'Používá se světlé barevné schéma.'),
             value: _darkMode,
             onChanged: _toggleDarkMode,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NOVÉ: Vykreslení sekce pro databázi
+  Widget _buildDatabaseSection() {
+    return _buildSectionCard(
+      icon: Icons.storage_outlined,
+      color: Colors.purple,
+      title: 'Zdroj dat (Databáze)',
+      subtitle: 'Zadejte URL adresu pro stažení aktuálních jízdních dat.',
+      child: Column(
+        children: [
+          _buildTextField(
+            controller: _dbUrlController,
+            label: 'URL adresa databáze (.sqlite)',
+            hint: 'https://minibrzda.jednoduse.cz/data/databaze.sqlite',
+            icon: Icons.link,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _saveAndDownloadDb(),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(              onPressed: _saveAndDownloadDb,
+              icon: const Icon(Icons.cloud_download_outlined),
+              label: const Text('Uložit URL a stáhnout databázi'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.purple,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
           ),
         ],
       ),
@@ -578,7 +652,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Ostatní čistě UI Helpery z původní logiky:
   Widget _buildDangerZone() {
     final bool dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -631,7 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Text('Vymazat lokální data', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
                           SizedBox(height: 3),
-                          Text('Smaže jméno, licenci a všechna oprávnění.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          Text('Smaže jméno, licenci, DB URL a všechna oprávnění.', style: TextStyle(color: Colors.grey, fontSize: 12)),
                         ],
                       ),
                     ),

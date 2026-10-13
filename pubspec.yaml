@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.6.7
+version: 0.6.76
 
 environment:
   sdk: ^3.9.2
@@ -49,6 +49,14 @@ dependencies:
   http: any
   charset: ^2.0.1
   cloud_firestore: ^4.17.5
+# Hlavní knihovna pro Drift
+  drift: ^2.14.0 
+  # Knihovny pro běh SQLite na mobilech a desktopu (vč. Windows)
+  sqlite3_flutter_libs: ^0.5.18 
+  # Pro zjištění cesty, kam se DB v zařízení uloží
+
+  path: ^1.8.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -59,7 +67,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_launcher_icons: "^0.14.4"
+#  flutter_launcher_icons: "^0.14.4"
+# Nástroje pro automatické generování kódu
+  build_runner: ^2.4.6 
+  drift_dev: ^2.14.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
