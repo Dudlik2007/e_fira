@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:drift/drift.dart' as drift; // Přidáno pro Drift
+//import 'package:drift/drift.dart' as drift; // Přidáno pro Drift
 import 'database/app_database.dart'; // Tvá databáze
 import 'database/db_provider.dart';  // Zde máš late AppDatabase db;
 import 'train_editor_page.dart';
