@@ -1,4 +1,4 @@
-package com.example.e_fira
+package cz.minibrzda.efira
 
 import io.flutter.embedding.android.FlutterActivity
 

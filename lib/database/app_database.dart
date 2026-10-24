@@ -5,14 +5,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:e_fira/report_data.dart'; // Nezapomeň na správnou cestu k tvému ReportData
 
-// Sem Drift vygeneruje zbytek kódu (bude to chvíli svítit červeně, to je normální)
 part 'app_database.g.dart';
 
-// 1. Definice tabulky (Třída musí dědit z Table)
+// ==========================================
+// 1. EXISTUJÍCÍ TABULKA VLAKŮ
+// ==========================================
 class Trains extends Table {
   IntColumn get id => integer().autoIncrement()();
   
-  // Přidáno .named('...'), aby Drift nehledal 'train_name' ale 'trainName'
+  // ---> NOVÝ PŘÍZNAK PRO FORK (RUČNĚ vs. VÝKAZ VOZIDEL) <---
+  BoolColumn get useVehicleRoster => boolean().named('useVehicleRoster').withDefault(const Constant(false))();
+
   TextColumn get trainName => text().named('trainName').nullable()();
   IntColumn get trainNumber => integer().named('trainNumber').nullable()();
   IntColumn get maxSpeed => integer().named('maxSpeed').nullable()();
@@ -53,7 +56,46 @@ class Trains extends Table {
   String get tableName => 'trains';
 }
 
-@DriftDatabase(tables: [Trains])
+// ==========================================
+// 2. NOVÁ TABULKA: KATALOG VOZIDEL (Na výběr)
+// ==========================================
+class VehicleCatalog extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get seriesName => text()(); // Např. "Vectron 193", "Bmz"
+  BoolColumn get isLocomotive => boolean().withDefault(const Constant(false))();
+  
+  RealColumn get length => real()(); // Délka v metrech
+  RealColumn get emptyWeight => real()(); // Vlastní hmotnost
+  IntColumn get axles => integer()(); // Počet náprav
+  
+  TextColumn get defaultBrakeType => text()(); // "K", "D", "Šp"
+  RealColumn get defaultBrakeWeight => real()(); // Brzdicí váha
+}
+
+// ==========================================
+// 3. NOVÁ TABULKA: VÝKAZ VOZIDEL (Zařazené vozy)
+// ==========================================
+class TrainVehicles extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  
+  // Propojení na tabulku Trains (Když se smaže vlak, smažou se i jeho vozy)
+  IntColumn get trainId => integer().customConstraint('REFERENCES trains(id) ON DELETE CASCADE')();
+  
+  IntColumn get position => integer()(); // Pořadí vlaku (1 = první)
+  TextColumn get uicNumber => text().nullable()(); // 12místné UIC
+  
+  // Technické údaje (zkopírované z katalogu při přidání, aby šly upravit pro konkrétní jízdu)
+  TextColumn get vehicleName => text()(); 
+  RealColumn get length => real()();
+  RealColumn get emptyWeight => real()();
+  RealColumn get loadWeight => real().withDefault(const Constant(0.0))(); // Hmotnost nákladu/cestujících
+  IntColumn get axles => integer()();
+  TextColumn get brakeType => text()(); 
+  RealColumn get brakeWeight => real()();
+}
+
+// === Registrace všech 3 tabulek do databáze ===
+@DriftDatabase(tables: [Trains, VehicleCatalog, TrainVehicles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -61,9 +103,8 @@ class AppDatabase extends _$AppDatabase {
   int get schemaVersion => 1;
 
   // ==========================================
-  // NOVÉ FUNKCE PRO ZÍSKÁVÁNÍ DAT
+  // FUNKCE PRO ZÍSKÁVÁNÍ DAT
   // ==========================================
-// Změněno z Train na TrainsCompanion pro insert a update
   Future<int> insertTrain(TrainsCompanion train) {
     return into(trains).insert(train);
   }
@@ -75,46 +116,35 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteTrain(Train train) {
     return delete(trains).delete(train);
   }
-  // 1. Získá seznam úplně všech vlaků
+
   Future<List<Train>> getAllTrains() {
     return select(trains).get();
   }
 
-  // 2. Získá jen unikátní názvy cílových stanic (pro nějaký dropdown/filtr)
   Future<List<String>> getUniqueDestinations() async {
-    // Vytvoříme vlastní dotaz, abychom vybrali jen unikátní hodnoty
     final query = selectOnly(trains, distinct: true)
       ..addColumns([trains.destinationStation]);
       
     final results = await query.map((row) => row.read(trains.destinationStation)).get();
-    
-    // Vyfiltrujeme případné null hodnoty
     return results.where((s) => s != null).cast<String>().toList();
   }
 
-  // 3. Vyhledá konkrétní vlak podle jeho čísla (např. 10542)
   Future<Train?> getTrainByNumber(int number) {
     return (select(trains)..where((t) => t.trainNumber.equals(number))).getSingleOrNull();
   }
 }
 
-// 3. Funkce pro připojení k SQLite souboru
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // Najde bezpečnou složku pro aplikaci (na Windows to bude v AppData, na Androidu v interním úložišti)
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'databaze.sqlite'));
-    
     return NativeDatabase.createInBackground(file);
   });
 }
 
-
-
 // Převodník z nové SQLite databáze do starého formátu aplikace
 extension TrainToReportData on Train {
   ReportData toReportData() {
-    // Nasimulujeme řádek z CSV, aby si to tvoje existující třída ReportData uměla sama přebrat
     return ReportData.fromCsvRow([
       trainName ?? '',
       trainNumber?.toString() ?? '',
@@ -154,4 +184,3 @@ extension TrainToReportData on Train {
     ]);
   }
 }
-

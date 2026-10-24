@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import 'report_data.dart';
 import 'train_selection_page.dart';
+// TODO: Zde později odkomentuješ import pro Výkaz vozidel
+// import 'vehicle_roster_page.dart'; 
 
 class ReportPage extends StatelessWidget {
   final ReportData data;
@@ -29,7 +31,6 @@ class ReportPage extends StatelessWidget {
 
   // --- Widget Parts ---
 
-  // Header (název, číslo vlaku, datum)
   Widget _buildHeader(BuildContext context) {
     final now = DateTime.now();
     return Container(
@@ -42,7 +43,7 @@ class ReportPage extends StatelessWidget {
           const Expanded(child: Divider(color: Colors.white, thickness: 1)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(data.trainNumber, style: _headerTextStyle),
+            child: Text(data.trainNumber.isNotEmpty ? data.trainNumber : '???', style: _headerTextStyle),
           ),
           const Expanded(child: Divider(color: Colors.white, thickness: 1)),
           const SizedBox(width: 8),
@@ -55,7 +56,6 @@ class ReportPage extends StatelessWidget {
     );
   }
 
-  // Barevný indikátor (NBÜ, dveře, atd.)
   Widget _coloredIndicatorSplit(String label, String value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -68,13 +68,12 @@ class ReportPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           color: color,
-          child: Text(value, textAlign: TextAlign.center, style: _indicatorValueStyle),
+          child: Text(value.isNotEmpty ? value : '–––', textAlign: TextAlign.center, style: _indicatorValueStyle),
         ),
       ],
     );
   }
 
-  // Malý box (stanice)
   Widget _smallInfoBox({required String title, required String value}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -89,13 +88,12 @@ class ReportPage extends StatelessWidget {
         children: [
           Text(title, style: _labelTextStyle),
           const SizedBox(height: 4),
-          Text(value, style: _valueTextStyle, overflow: TextOverflow.ellipsis),
+          Text(value.isNotEmpty ? value : '–––', style: _valueTextStyle, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
   }
 
-  // Buňka s daty (zobrazí '–––' červeně, pokud je hodnota prázdná)
   Widget _dataCell(String title, String value, {Color bg = cellBg, TextAlign align = TextAlign.left}) {
     final bool isEmpty = value.trim().isEmpty || value == '---' || value == '–––';
     final displayValue = isEmpty ? '–––' : value;
@@ -115,7 +113,6 @@ class ReportPage extends StatelessWidget {
     );
   }
 
-  // Ikona (D/K)
   Widget _iconCell(String iconChar, String value, {Color bg = cellBg}) {
     return Container(
       color: bg,
@@ -133,14 +130,13 @@ class ReportPage extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(value, style: _valueTextStyle, overflow: TextOverflow.ellipsis),
+            child: Text(value.isNotEmpty ? value : '0', style: _valueTextStyle, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
     );
   }
 
-  // ÚZB / JZB buňka
   Widget _brakeCheckCell({required String title, required String kdy, required String where, required String by, Color bg = cellBg}) {
     return Container(
       color: bg,
@@ -155,7 +151,6 @@ class ReportPage extends StatelessWidget {
     );
   }
 
-  // Řádek s detailem (pro ÚZB/JZB)
   Widget _detailRow(String label, String value) {
     final bool isEmpty = value.trim().isEmpty;
     final valueStyle = isEmpty ? _smallValueTextStyle.copyWith(color: Colors.redAccent) : _smallValueTextStyle;
@@ -175,7 +170,7 @@ class ReportPage extends StatelessWidget {
     String brakePercentDisplay =
         'skut.: ${data.brakingPercentageActual}  potř.: ${data.brakingPercentageRequired}  chyb.: ${data.brakingPercentageMissing}';
     return Row(children: [
-      Expanded(flex: 5, child: _dataCell('Nejvyšší rychlost vlaku:', data.maxSpeed, bg: darkCell)),
+      Expanded(flex: 5, child: _dataCell('Nejvyšší rychlost vlaku:', '${data.maxSpeed} km/h', bg: darkCell)),
       const SizedBox(width: 6),
       Expanded(flex: 5, child: _dataCell('Brzdící procento:', brakePercentDisplay, bg: lightCell)),
     ]);
@@ -183,9 +178,9 @@ class ReportPage extends StatelessWidget {
 
   Widget _buildTrainLengthAndBrakeTypesRow() {
     return Row(children: [
-      Expanded(flex: 3, child: _dataCell('Délka vlaku:', data.trainLength, bg: darkCell)),
+      Expanded(flex: 3, child: _dataCell('Délka vlaku:', '${data.trainLength} m', bg: darkCell)),
       const SizedBox(width: 6),
-      Expanded(flex: 2, child: _dataCell('Počet náprav:', data.trainWheels.toString(), bg: darkCell, align: TextAlign.center)),
+      Expanded(flex: 2, child: _dataCell('Počet náprav:', data.trainWheels, bg: darkCell, align: TextAlign.center)),
       const SizedBox(width: 6),
       Expanded(
         flex: 5,
@@ -219,36 +214,32 @@ class ReportPage extends StatelessWidget {
           flex: 5,
           child: _dataCell(
               'Hmotnost ŽKV:',
-              'činná: ${data.activeVehiclesWeight}  dopr.: ${data.transportVehiclesWeight}  vlak: ${data.totalVehiclesWeight}',
+              'činná: ${data.activeVehiclesWeight}  dopr.: ${data.transportVehiclesWeight}  vlak: ${data.totalVehiclesWeight} t',
               bg: lightCell)),
     ]);
   }
 
   Widget _buildBrakeChecksRow() {
     final now = DateTime.now();
-    // Scenarios simulation: 50% chance UZB is older than 4 hours.
+    // TODO: Zde by se v budoucnu měl načítat reálný čas z databáze místo random simulace
     final bool simulateOldUzb = Random().nextBool();
 
     DateTime uzbTime;
     String jzbKdy = "";
-    String jzbKde = data.jzbLocation; // Original value
-    String jzbKym = data.jzbPerformedBy; // Original value
+    String jzbKde = data.jzbLocation; 
+    String jzbKym = data.jzbPerformedBy; 
 
     if (simulateOldUzb) {
-      // --- Case 1: UZB is "old" (4-24h ago), so JZB is performed now. ---
       final jzbTime = now;
       jzbKdy = DateFormat('HH:mm').format(jzbTime);
-      jzbKde = data.currentStation;
+      jzbKde = data.currentStation.isNotEmpty ? data.currentStation : '–––';
       jzbKym = 'vlakvedoucí';
 
-      // UZB must be between 4 and 24 hours older than JZB.
-      final randomHours = Random().nextInt(20); // 0-19
-      final randomMinutes = Random().nextInt(60); // 0-59
+      final randomHours = Random().nextInt(20);
+      final randomMinutes = Random().nextInt(60);
       uzbTime = jzbTime.subtract(Duration(hours: 4 + randomHours, minutes: randomMinutes));
-
     } else {
-      // --- Case 2: UZB is "fresh" (<4h ago), so no new JZB is needed. ---
-      final randomMinutes = Random().nextInt(4 * 60); // 0-239 minutes
+      final randomMinutes = Random().nextInt(4 * 60);
       uzbTime = now.subtract(Duration(minutes: randomMinutes));
     }
 
@@ -296,7 +287,7 @@ class ReportPage extends StatelessWidget {
     ]);
   }
 
-  Widget _buildParkingForceRow() {
+  Widget _buildParkingForceRow(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -310,9 +301,7 @@ class ReportPage extends StatelessWidget {
           const Text('Potřebná zajišťovací síla [Fpark] [kN]', style: _labelTextStyle),
           const SizedBox(height: 6),
           ElevatedButton(
-            onPressed: () {
-              // TODO: doplnit výpočet síly
-            },
+            onPressed: () => _showParkingForceDialog(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueGrey[700],
               foregroundColor: Colors.white,
@@ -323,6 +312,36 @@ class ReportPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // --- DIALOG PRO VÝPOČET ZAJIŠŤOVACÍ SÍLY ---
+  void _showParkingForceDialog(BuildContext context) {
+    // Zde můžeš implementovat přesný vzorec pro Fpark.
+    // Příklad hrubého odhadu: Hmotnost vlaku * sklon (promile) * konstanta.
+    final double weight = data.totalVehiclesWeight;
+    final double force = weight > 0 ? (weight * 0.05) : 0.0; 
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: darkCell,
+          title: const Text('Zajišťovací síla', style: TextStyle(color: Colors.white)),
+          content: Text(
+            weight > 0 
+              ? 'Při celkové hmotnosti $weight t je orientační potřebná zajišťovací síla:\n\n${force.toStringAsFixed(1)} kN\n\n(Zde doplň přesný výpočet ze spádu)' 
+              : 'Pro výpočet musíte nejprve zadat celkovou hmotnost vlaku.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ZAVŘÍT', style: TextStyle(color: Colors.blueAccent)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -358,8 +377,6 @@ class ReportPage extends StatelessWidget {
       );
   }
 
-
-  // Velká tabulka (Sestavená z menších částí)
   Widget _buildBigTable(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(_pad),
@@ -388,7 +405,7 @@ class ReportPage extends StatelessWidget {
           const SizedBox(height: 6),
           _buildBrakingModeRow(),
           const SizedBox(height: 6),
-          _buildParkingForceRow(),
+          _buildParkingForceRow(context),
           const SizedBox(height: 6),
           _buildSecurableVehiclesRow(),
           const SizedBox(height: 6),
@@ -480,7 +497,19 @@ class ReportPage extends StatelessWidget {
               const SizedBox(width: 10),
               ElevatedButton(
                 onPressed: () {
-                  //  otevřít VV
+                  // --- PROPOJENÍ NA VÝKAZ VOZIDEL ---
+                  /* 
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      // Předáme vlaku ID nebo jeho instanci
+                      builder: (context) => VehicleRosterPage(trainNumber: data.trainNumber), 
+                    ),
+                  );
+                  */
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Výkaz vozidel se připravuje...')),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white12,

@@ -21,6 +21,21 @@ class $TrainsTable extends Trains with TableInfo<$TrainsTable, Train> {
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _useVehicleRosterMeta = const VerificationMeta(
+    'useVehicleRoster',
+  );
+  @override
+  late final GeneratedColumn<bool> useVehicleRoster = GeneratedColumn<bool>(
+    'useVehicleRoster',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("useVehicleRoster" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _trainNameMeta = const VerificationMeta(
     'trainName',
   );
@@ -408,6 +423,7 @@ class $TrainsTable extends Trains with TableInfo<$TrainsTable, Train> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    useVehicleRoster,
     trainName,
     trainNumber,
     maxSpeed,
@@ -458,6 +474,15 @@ class $TrainsTable extends Trains with TableInfo<$TrainsTable, Train> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('useVehicleRoster')) {
+      context.handle(
+        _useVehicleRosterMeta,
+        useVehicleRoster.isAcceptableOrUnknown(
+          data['useVehicleRoster']!,
+          _useVehicleRosterMeta,
+        ),
+      );
     }
     if (data.containsKey('trainName')) {
       context.handle(
@@ -766,6 +791,10 @@ class $TrainsTable extends Trains with TableInfo<$TrainsTable, Train> {
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      useVehicleRoster: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}useVehicleRoster'],
+      )!,
       trainName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}trainName'],
@@ -917,6 +946,7 @@ class $TrainsTable extends Trains with TableInfo<$TrainsTable, Train> {
 
 class Train extends DataClass implements Insertable<Train> {
   final int id;
+  final bool useVehicleRoster;
   final String? trainName;
   final int? trainNumber;
   final int? maxSpeed;
@@ -954,6 +984,7 @@ class Train extends DataClass implements Insertable<Train> {
   final String? tjrFileName;
   const Train({
     required this.id,
+    required this.useVehicleRoster,
     this.trainName,
     this.trainNumber,
     this.maxSpeed,
@@ -994,6 +1025,7 @@ class Train extends DataClass implements Insertable<Train> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['useVehicleRoster'] = Variable<bool>(useVehicleRoster);
     if (!nullToAbsent || trainName != null) {
       map['trainName'] = Variable<String>(trainName);
     }
@@ -1109,6 +1141,7 @@ class Train extends DataClass implements Insertable<Train> {
   TrainsCompanion toCompanion(bool nullToAbsent) {
     return TrainsCompanion(
       id: Value(id),
+      useVehicleRoster: Value(useVehicleRoster),
       trainName: trainName == null && nullToAbsent
           ? const Value.absent()
           : Value(trainName),
@@ -1225,6 +1258,7 @@ class Train extends DataClass implements Insertable<Train> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Train(
       id: serializer.fromJson<int>(json['id']),
+      useVehicleRoster: serializer.fromJson<bool>(json['useVehicleRoster']),
       trainName: serializer.fromJson<String?>(json['trainName']),
       trainNumber: serializer.fromJson<int?>(json['trainNumber']),
       maxSpeed: serializer.fromJson<int?>(json['maxSpeed']),
@@ -1291,6 +1325,7 @@ class Train extends DataClass implements Insertable<Train> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'useVehicleRoster': serializer.toJson<bool>(useVehicleRoster),
       'trainName': serializer.toJson<String?>(trainName),
       'trainNumber': serializer.toJson<int?>(trainNumber),
       'maxSpeed': serializer.toJson<int?>(maxSpeed),
@@ -1339,6 +1374,7 @@ class Train extends DataClass implements Insertable<Train> {
 
   Train copyWith({
     int? id,
+    bool? useVehicleRoster,
     Value<String?> trainName = const Value.absent(),
     Value<int?> trainNumber = const Value.absent(),
     Value<int?> maxSpeed = const Value.absent(),
@@ -1376,6 +1412,7 @@ class Train extends DataClass implements Insertable<Train> {
     Value<String?> tjrFileName = const Value.absent(),
   }) => Train(
     id: id ?? this.id,
+    useVehicleRoster: useVehicleRoster ?? this.useVehicleRoster,
     trainName: trainName.present ? trainName.value : this.trainName,
     trainNumber: trainNumber.present ? trainNumber.value : this.trainNumber,
     maxSpeed: maxSpeed.present ? maxSpeed.value : this.maxSpeed,
@@ -1453,6 +1490,9 @@ class Train extends DataClass implements Insertable<Train> {
   Train copyWithCompanion(TrainsCompanion data) {
     return Train(
       id: data.id.present ? data.id.value : this.id,
+      useVehicleRoster: data.useVehicleRoster.present
+          ? data.useVehicleRoster.value
+          : this.useVehicleRoster,
       trainName: data.trainName.present ? data.trainName.value : this.trainName,
       trainNumber: data.trainNumber.present
           ? data.trainNumber.value
@@ -1555,6 +1595,7 @@ class Train extends DataClass implements Insertable<Train> {
   String toString() {
     return (StringBuffer('Train(')
           ..write('id: $id, ')
+          ..write('useVehicleRoster: $useVehicleRoster, ')
           ..write('trainName: $trainName, ')
           ..write('trainNumber: $trainNumber, ')
           ..write('maxSpeed: $maxSpeed, ')
@@ -1597,6 +1638,7 @@ class Train extends DataClass implements Insertable<Train> {
   @override
   int get hashCode => Object.hashAll([
     id,
+    useVehicleRoster,
     trainName,
     trainNumber,
     maxSpeed,
@@ -1638,6 +1680,7 @@ class Train extends DataClass implements Insertable<Train> {
       identical(this, other) ||
       (other is Train &&
           other.id == this.id &&
+          other.useVehicleRoster == this.useVehicleRoster &&
           other.trainName == this.trainName &&
           other.trainNumber == this.trainNumber &&
           other.maxSpeed == this.maxSpeed &&
@@ -1677,6 +1720,7 @@ class Train extends DataClass implements Insertable<Train> {
 
 class TrainsCompanion extends UpdateCompanion<Train> {
   final Value<int> id;
+  final Value<bool> useVehicleRoster;
   final Value<String?> trainName;
   final Value<int?> trainNumber;
   final Value<int?> maxSpeed;
@@ -1714,6 +1758,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   final Value<String?> tjrFileName;
   const TrainsCompanion({
     this.id = const Value.absent(),
+    this.useVehicleRoster = const Value.absent(),
     this.trainName = const Value.absent(),
     this.trainNumber = const Value.absent(),
     this.maxSpeed = const Value.absent(),
@@ -1752,6 +1797,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   });
   TrainsCompanion.insert({
     this.id = const Value.absent(),
+    this.useVehicleRoster = const Value.absent(),
     this.trainName = const Value.absent(),
     this.trainNumber = const Value.absent(),
     this.maxSpeed = const Value.absent(),
@@ -1790,6 +1836,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   });
   static Insertable<Train> custom({
     Expression<int>? id,
+    Expression<bool>? useVehicleRoster,
     Expression<String>? trainName,
     Expression<int>? trainNumber,
     Expression<int>? maxSpeed,
@@ -1828,6 +1875,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (useVehicleRoster != null) 'useVehicleRoster': useVehicleRoster,
       if (trainName != null) 'trainName': trainName,
       if (trainNumber != null) 'trainNumber': trainNumber,
       if (maxSpeed != null) 'maxSpeed': maxSpeed,
@@ -1877,6 +1925,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
 
   TrainsCompanion copyWith({
     Value<int>? id,
+    Value<bool>? useVehicleRoster,
     Value<String?>? trainName,
     Value<int?>? trainNumber,
     Value<int?>? maxSpeed,
@@ -1915,6 +1964,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   }) {
     return TrainsCompanion(
       id: id ?? this.id,
+      useVehicleRoster: useVehicleRoster ?? this.useVehicleRoster,
       trainName: trainName ?? this.trainName,
       trainNumber: trainNumber ?? this.trainNumber,
       maxSpeed: maxSpeed ?? this.maxSpeed,
@@ -1963,6 +2013,9 @@ class TrainsCompanion extends UpdateCompanion<Train> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (useVehicleRoster.present) {
+      map['useVehicleRoster'] = Variable<bool>(useVehicleRoster.value);
     }
     if (trainName.present) {
       map['trainName'] = Variable<String>(trainName.value);
@@ -2088,6 +2141,7 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   String toString() {
     return (StringBuffer('TrainsCompanion(')
           ..write('id: $id, ')
+          ..write('useVehicleRoster: $useVehicleRoster, ')
           ..write('trainName: $trainName, ')
           ..write('trainNumber: $trainNumber, ')
           ..write('maxSpeed: $maxSpeed, ')
@@ -2128,20 +2182,1221 @@ class TrainsCompanion extends UpdateCompanion<Train> {
   }
 }
 
+class $VehicleCatalogTable extends VehicleCatalog
+    with TableInfo<$VehicleCatalogTable, VehicleCatalogData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VehicleCatalogTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _seriesNameMeta = const VerificationMeta(
+    'seriesName',
+  );
+  @override
+  late final GeneratedColumn<String> seriesName = GeneratedColumn<String>(
+    'series_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isLocomotiveMeta = const VerificationMeta(
+    'isLocomotive',
+  );
+  @override
+  late final GeneratedColumn<bool> isLocomotive = GeneratedColumn<bool>(
+    'is_locomotive',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_locomotive" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lengthMeta = const VerificationMeta('length');
+  @override
+  late final GeneratedColumn<double> length = GeneratedColumn<double>(
+    'length',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emptyWeightMeta = const VerificationMeta(
+    'emptyWeight',
+  );
+  @override
+  late final GeneratedColumn<double> emptyWeight = GeneratedColumn<double>(
+    'empty_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _axlesMeta = const VerificationMeta('axles');
+  @override
+  late final GeneratedColumn<int> axles = GeneratedColumn<int>(
+    'axles',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _defaultBrakeTypeMeta = const VerificationMeta(
+    'defaultBrakeType',
+  );
+  @override
+  late final GeneratedColumn<String> defaultBrakeType = GeneratedColumn<String>(
+    'default_brake_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _defaultBrakeWeightMeta =
+      const VerificationMeta('defaultBrakeWeight');
+  @override
+  late final GeneratedColumn<double> defaultBrakeWeight =
+      GeneratedColumn<double>(
+        'default_brake_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    seriesName,
+    isLocomotive,
+    length,
+    emptyWeight,
+    axles,
+    defaultBrakeType,
+    defaultBrakeWeight,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vehicle_catalog';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VehicleCatalogData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('series_name')) {
+      context.handle(
+        _seriesNameMeta,
+        seriesName.isAcceptableOrUnknown(data['series_name']!, _seriesNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seriesNameMeta);
+    }
+    if (data.containsKey('is_locomotive')) {
+      context.handle(
+        _isLocomotiveMeta,
+        isLocomotive.isAcceptableOrUnknown(
+          data['is_locomotive']!,
+          _isLocomotiveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('length')) {
+      context.handle(
+        _lengthMeta,
+        length.isAcceptableOrUnknown(data['length']!, _lengthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lengthMeta);
+    }
+    if (data.containsKey('empty_weight')) {
+      context.handle(
+        _emptyWeightMeta,
+        emptyWeight.isAcceptableOrUnknown(
+          data['empty_weight']!,
+          _emptyWeightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_emptyWeightMeta);
+    }
+    if (data.containsKey('axles')) {
+      context.handle(
+        _axlesMeta,
+        axles.isAcceptableOrUnknown(data['axles']!, _axlesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_axlesMeta);
+    }
+    if (data.containsKey('default_brake_type')) {
+      context.handle(
+        _defaultBrakeTypeMeta,
+        defaultBrakeType.isAcceptableOrUnknown(
+          data['default_brake_type']!,
+          _defaultBrakeTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultBrakeTypeMeta);
+    }
+    if (data.containsKey('default_brake_weight')) {
+      context.handle(
+        _defaultBrakeWeightMeta,
+        defaultBrakeWeight.isAcceptableOrUnknown(
+          data['default_brake_weight']!,
+          _defaultBrakeWeightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultBrakeWeightMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VehicleCatalogData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VehicleCatalogData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      seriesName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}series_name'],
+      )!,
+      isLocomotive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_locomotive'],
+      )!,
+      length: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}length'],
+      )!,
+      emptyWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}empty_weight'],
+      )!,
+      axles: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}axles'],
+      )!,
+      defaultBrakeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_brake_type'],
+      )!,
+      defaultBrakeWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}default_brake_weight'],
+      )!,
+    );
+  }
+
+  @override
+  $VehicleCatalogTable createAlias(String alias) {
+    return $VehicleCatalogTable(attachedDatabase, alias);
+  }
+}
+
+class VehicleCatalogData extends DataClass
+    implements Insertable<VehicleCatalogData> {
+  final int id;
+  final String seriesName;
+  final bool isLocomotive;
+  final double length;
+  final double emptyWeight;
+  final int axles;
+  final String defaultBrakeType;
+  final double defaultBrakeWeight;
+  const VehicleCatalogData({
+    required this.id,
+    required this.seriesName,
+    required this.isLocomotive,
+    required this.length,
+    required this.emptyWeight,
+    required this.axles,
+    required this.defaultBrakeType,
+    required this.defaultBrakeWeight,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['series_name'] = Variable<String>(seriesName);
+    map['is_locomotive'] = Variable<bool>(isLocomotive);
+    map['length'] = Variable<double>(length);
+    map['empty_weight'] = Variable<double>(emptyWeight);
+    map['axles'] = Variable<int>(axles);
+    map['default_brake_type'] = Variable<String>(defaultBrakeType);
+    map['default_brake_weight'] = Variable<double>(defaultBrakeWeight);
+    return map;
+  }
+
+  VehicleCatalogCompanion toCompanion(bool nullToAbsent) {
+    return VehicleCatalogCompanion(
+      id: Value(id),
+      seriesName: Value(seriesName),
+      isLocomotive: Value(isLocomotive),
+      length: Value(length),
+      emptyWeight: Value(emptyWeight),
+      axles: Value(axles),
+      defaultBrakeType: Value(defaultBrakeType),
+      defaultBrakeWeight: Value(defaultBrakeWeight),
+    );
+  }
+
+  factory VehicleCatalogData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VehicleCatalogData(
+      id: serializer.fromJson<int>(json['id']),
+      seriesName: serializer.fromJson<String>(json['seriesName']),
+      isLocomotive: serializer.fromJson<bool>(json['isLocomotive']),
+      length: serializer.fromJson<double>(json['length']),
+      emptyWeight: serializer.fromJson<double>(json['emptyWeight']),
+      axles: serializer.fromJson<int>(json['axles']),
+      defaultBrakeType: serializer.fromJson<String>(json['defaultBrakeType']),
+      defaultBrakeWeight: serializer.fromJson<double>(
+        json['defaultBrakeWeight'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'seriesName': serializer.toJson<String>(seriesName),
+      'isLocomotive': serializer.toJson<bool>(isLocomotive),
+      'length': serializer.toJson<double>(length),
+      'emptyWeight': serializer.toJson<double>(emptyWeight),
+      'axles': serializer.toJson<int>(axles),
+      'defaultBrakeType': serializer.toJson<String>(defaultBrakeType),
+      'defaultBrakeWeight': serializer.toJson<double>(defaultBrakeWeight),
+    };
+  }
+
+  VehicleCatalogData copyWith({
+    int? id,
+    String? seriesName,
+    bool? isLocomotive,
+    double? length,
+    double? emptyWeight,
+    int? axles,
+    String? defaultBrakeType,
+    double? defaultBrakeWeight,
+  }) => VehicleCatalogData(
+    id: id ?? this.id,
+    seriesName: seriesName ?? this.seriesName,
+    isLocomotive: isLocomotive ?? this.isLocomotive,
+    length: length ?? this.length,
+    emptyWeight: emptyWeight ?? this.emptyWeight,
+    axles: axles ?? this.axles,
+    defaultBrakeType: defaultBrakeType ?? this.defaultBrakeType,
+    defaultBrakeWeight: defaultBrakeWeight ?? this.defaultBrakeWeight,
+  );
+  VehicleCatalogData copyWithCompanion(VehicleCatalogCompanion data) {
+    return VehicleCatalogData(
+      id: data.id.present ? data.id.value : this.id,
+      seriesName: data.seriesName.present
+          ? data.seriesName.value
+          : this.seriesName,
+      isLocomotive: data.isLocomotive.present
+          ? data.isLocomotive.value
+          : this.isLocomotive,
+      length: data.length.present ? data.length.value : this.length,
+      emptyWeight: data.emptyWeight.present
+          ? data.emptyWeight.value
+          : this.emptyWeight,
+      axles: data.axles.present ? data.axles.value : this.axles,
+      defaultBrakeType: data.defaultBrakeType.present
+          ? data.defaultBrakeType.value
+          : this.defaultBrakeType,
+      defaultBrakeWeight: data.defaultBrakeWeight.present
+          ? data.defaultBrakeWeight.value
+          : this.defaultBrakeWeight,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleCatalogData(')
+          ..write('id: $id, ')
+          ..write('seriesName: $seriesName, ')
+          ..write('isLocomotive: $isLocomotive, ')
+          ..write('length: $length, ')
+          ..write('emptyWeight: $emptyWeight, ')
+          ..write('axles: $axles, ')
+          ..write('defaultBrakeType: $defaultBrakeType, ')
+          ..write('defaultBrakeWeight: $defaultBrakeWeight')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    seriesName,
+    isLocomotive,
+    length,
+    emptyWeight,
+    axles,
+    defaultBrakeType,
+    defaultBrakeWeight,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VehicleCatalogData &&
+          other.id == this.id &&
+          other.seriesName == this.seriesName &&
+          other.isLocomotive == this.isLocomotive &&
+          other.length == this.length &&
+          other.emptyWeight == this.emptyWeight &&
+          other.axles == this.axles &&
+          other.defaultBrakeType == this.defaultBrakeType &&
+          other.defaultBrakeWeight == this.defaultBrakeWeight);
+}
+
+class VehicleCatalogCompanion extends UpdateCompanion<VehicleCatalogData> {
+  final Value<int> id;
+  final Value<String> seriesName;
+  final Value<bool> isLocomotive;
+  final Value<double> length;
+  final Value<double> emptyWeight;
+  final Value<int> axles;
+  final Value<String> defaultBrakeType;
+  final Value<double> defaultBrakeWeight;
+  const VehicleCatalogCompanion({
+    this.id = const Value.absent(),
+    this.seriesName = const Value.absent(),
+    this.isLocomotive = const Value.absent(),
+    this.length = const Value.absent(),
+    this.emptyWeight = const Value.absent(),
+    this.axles = const Value.absent(),
+    this.defaultBrakeType = const Value.absent(),
+    this.defaultBrakeWeight = const Value.absent(),
+  });
+  VehicleCatalogCompanion.insert({
+    this.id = const Value.absent(),
+    required String seriesName,
+    this.isLocomotive = const Value.absent(),
+    required double length,
+    required double emptyWeight,
+    required int axles,
+    required String defaultBrakeType,
+    required double defaultBrakeWeight,
+  }) : seriesName = Value(seriesName),
+       length = Value(length),
+       emptyWeight = Value(emptyWeight),
+       axles = Value(axles),
+       defaultBrakeType = Value(defaultBrakeType),
+       defaultBrakeWeight = Value(defaultBrakeWeight);
+  static Insertable<VehicleCatalogData> custom({
+    Expression<int>? id,
+    Expression<String>? seriesName,
+    Expression<bool>? isLocomotive,
+    Expression<double>? length,
+    Expression<double>? emptyWeight,
+    Expression<int>? axles,
+    Expression<String>? defaultBrakeType,
+    Expression<double>? defaultBrakeWeight,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (seriesName != null) 'series_name': seriesName,
+      if (isLocomotive != null) 'is_locomotive': isLocomotive,
+      if (length != null) 'length': length,
+      if (emptyWeight != null) 'empty_weight': emptyWeight,
+      if (axles != null) 'axles': axles,
+      if (defaultBrakeType != null) 'default_brake_type': defaultBrakeType,
+      if (defaultBrakeWeight != null)
+        'default_brake_weight': defaultBrakeWeight,
+    });
+  }
+
+  VehicleCatalogCompanion copyWith({
+    Value<int>? id,
+    Value<String>? seriesName,
+    Value<bool>? isLocomotive,
+    Value<double>? length,
+    Value<double>? emptyWeight,
+    Value<int>? axles,
+    Value<String>? defaultBrakeType,
+    Value<double>? defaultBrakeWeight,
+  }) {
+    return VehicleCatalogCompanion(
+      id: id ?? this.id,
+      seriesName: seriesName ?? this.seriesName,
+      isLocomotive: isLocomotive ?? this.isLocomotive,
+      length: length ?? this.length,
+      emptyWeight: emptyWeight ?? this.emptyWeight,
+      axles: axles ?? this.axles,
+      defaultBrakeType: defaultBrakeType ?? this.defaultBrakeType,
+      defaultBrakeWeight: defaultBrakeWeight ?? this.defaultBrakeWeight,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (seriesName.present) {
+      map['series_name'] = Variable<String>(seriesName.value);
+    }
+    if (isLocomotive.present) {
+      map['is_locomotive'] = Variable<bool>(isLocomotive.value);
+    }
+    if (length.present) {
+      map['length'] = Variable<double>(length.value);
+    }
+    if (emptyWeight.present) {
+      map['empty_weight'] = Variable<double>(emptyWeight.value);
+    }
+    if (axles.present) {
+      map['axles'] = Variable<int>(axles.value);
+    }
+    if (defaultBrakeType.present) {
+      map['default_brake_type'] = Variable<String>(defaultBrakeType.value);
+    }
+    if (defaultBrakeWeight.present) {
+      map['default_brake_weight'] = Variable<double>(defaultBrakeWeight.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VehicleCatalogCompanion(')
+          ..write('id: $id, ')
+          ..write('seriesName: $seriesName, ')
+          ..write('isLocomotive: $isLocomotive, ')
+          ..write('length: $length, ')
+          ..write('emptyWeight: $emptyWeight, ')
+          ..write('axles: $axles, ')
+          ..write('defaultBrakeType: $defaultBrakeType, ')
+          ..write('defaultBrakeWeight: $defaultBrakeWeight')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TrainVehiclesTable extends TrainVehicles
+    with TableInfo<$TrainVehiclesTable, TrainVehicle> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrainVehiclesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _trainIdMeta = const VerificationMeta(
+    'trainId',
+  );
+  @override
+  late final GeneratedColumn<int> trainId = GeneratedColumn<int>(
+    'train_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'REFERENCES trains(id) ON DELETE CASCADE',
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uicNumberMeta = const VerificationMeta(
+    'uicNumber',
+  );
+  @override
+  late final GeneratedColumn<String> uicNumber = GeneratedColumn<String>(
+    'uic_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vehicleNameMeta = const VerificationMeta(
+    'vehicleName',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleName = GeneratedColumn<String>(
+    'vehicle_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lengthMeta = const VerificationMeta('length');
+  @override
+  late final GeneratedColumn<double> length = GeneratedColumn<double>(
+    'length',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emptyWeightMeta = const VerificationMeta(
+    'emptyWeight',
+  );
+  @override
+  late final GeneratedColumn<double> emptyWeight = GeneratedColumn<double>(
+    'empty_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _loadWeightMeta = const VerificationMeta(
+    'loadWeight',
+  );
+  @override
+  late final GeneratedColumn<double> loadWeight = GeneratedColumn<double>(
+    'load_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _axlesMeta = const VerificationMeta('axles');
+  @override
+  late final GeneratedColumn<int> axles = GeneratedColumn<int>(
+    'axles',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _brakeTypeMeta = const VerificationMeta(
+    'brakeType',
+  );
+  @override
+  late final GeneratedColumn<String> brakeType = GeneratedColumn<String>(
+    'brake_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _brakeWeightMeta = const VerificationMeta(
+    'brakeWeight',
+  );
+  @override
+  late final GeneratedColumn<double> brakeWeight = GeneratedColumn<double>(
+    'brake_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    trainId,
+    position,
+    uicNumber,
+    vehicleName,
+    length,
+    emptyWeight,
+    loadWeight,
+    axles,
+    brakeType,
+    brakeWeight,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'train_vehicles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrainVehicle> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('train_id')) {
+      context.handle(
+        _trainIdMeta,
+        trainId.isAcceptableOrUnknown(data['train_id']!, _trainIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trainIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('uic_number')) {
+      context.handle(
+        _uicNumberMeta,
+        uicNumber.isAcceptableOrUnknown(data['uic_number']!, _uicNumberMeta),
+      );
+    }
+    if (data.containsKey('vehicle_name')) {
+      context.handle(
+        _vehicleNameMeta,
+        vehicleName.isAcceptableOrUnknown(
+          data['vehicle_name']!,
+          _vehicleNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleNameMeta);
+    }
+    if (data.containsKey('length')) {
+      context.handle(
+        _lengthMeta,
+        length.isAcceptableOrUnknown(data['length']!, _lengthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lengthMeta);
+    }
+    if (data.containsKey('empty_weight')) {
+      context.handle(
+        _emptyWeightMeta,
+        emptyWeight.isAcceptableOrUnknown(
+          data['empty_weight']!,
+          _emptyWeightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_emptyWeightMeta);
+    }
+    if (data.containsKey('load_weight')) {
+      context.handle(
+        _loadWeightMeta,
+        loadWeight.isAcceptableOrUnknown(data['load_weight']!, _loadWeightMeta),
+      );
+    }
+    if (data.containsKey('axles')) {
+      context.handle(
+        _axlesMeta,
+        axles.isAcceptableOrUnknown(data['axles']!, _axlesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_axlesMeta);
+    }
+    if (data.containsKey('brake_type')) {
+      context.handle(
+        _brakeTypeMeta,
+        brakeType.isAcceptableOrUnknown(data['brake_type']!, _brakeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_brakeTypeMeta);
+    }
+    if (data.containsKey('brake_weight')) {
+      context.handle(
+        _brakeWeightMeta,
+        brakeWeight.isAcceptableOrUnknown(
+          data['brake_weight']!,
+          _brakeWeightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_brakeWeightMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TrainVehicle map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrainVehicle(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      trainId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}train_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      uicNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uic_number'],
+      ),
+      vehicleName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_name'],
+      )!,
+      length: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}length'],
+      )!,
+      emptyWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}empty_weight'],
+      )!,
+      loadWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}load_weight'],
+      )!,
+      axles: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}axles'],
+      )!,
+      brakeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brake_type'],
+      )!,
+      brakeWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}brake_weight'],
+      )!,
+    );
+  }
+
+  @override
+  $TrainVehiclesTable createAlias(String alias) {
+    return $TrainVehiclesTable(attachedDatabase, alias);
+  }
+}
+
+class TrainVehicle extends DataClass implements Insertable<TrainVehicle> {
+  final int id;
+  final int trainId;
+  final int position;
+  final String? uicNumber;
+  final String vehicleName;
+  final double length;
+  final double emptyWeight;
+  final double loadWeight;
+  final int axles;
+  final String brakeType;
+  final double brakeWeight;
+  const TrainVehicle({
+    required this.id,
+    required this.trainId,
+    required this.position,
+    this.uicNumber,
+    required this.vehicleName,
+    required this.length,
+    required this.emptyWeight,
+    required this.loadWeight,
+    required this.axles,
+    required this.brakeType,
+    required this.brakeWeight,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['train_id'] = Variable<int>(trainId);
+    map['position'] = Variable<int>(position);
+    if (!nullToAbsent || uicNumber != null) {
+      map['uic_number'] = Variable<String>(uicNumber);
+    }
+    map['vehicle_name'] = Variable<String>(vehicleName);
+    map['length'] = Variable<double>(length);
+    map['empty_weight'] = Variable<double>(emptyWeight);
+    map['load_weight'] = Variable<double>(loadWeight);
+    map['axles'] = Variable<int>(axles);
+    map['brake_type'] = Variable<String>(brakeType);
+    map['brake_weight'] = Variable<double>(brakeWeight);
+    return map;
+  }
+
+  TrainVehiclesCompanion toCompanion(bool nullToAbsent) {
+    return TrainVehiclesCompanion(
+      id: Value(id),
+      trainId: Value(trainId),
+      position: Value(position),
+      uicNumber: uicNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uicNumber),
+      vehicleName: Value(vehicleName),
+      length: Value(length),
+      emptyWeight: Value(emptyWeight),
+      loadWeight: Value(loadWeight),
+      axles: Value(axles),
+      brakeType: Value(brakeType),
+      brakeWeight: Value(brakeWeight),
+    );
+  }
+
+  factory TrainVehicle.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrainVehicle(
+      id: serializer.fromJson<int>(json['id']),
+      trainId: serializer.fromJson<int>(json['trainId']),
+      position: serializer.fromJson<int>(json['position']),
+      uicNumber: serializer.fromJson<String?>(json['uicNumber']),
+      vehicleName: serializer.fromJson<String>(json['vehicleName']),
+      length: serializer.fromJson<double>(json['length']),
+      emptyWeight: serializer.fromJson<double>(json['emptyWeight']),
+      loadWeight: serializer.fromJson<double>(json['loadWeight']),
+      axles: serializer.fromJson<int>(json['axles']),
+      brakeType: serializer.fromJson<String>(json['brakeType']),
+      brakeWeight: serializer.fromJson<double>(json['brakeWeight']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'trainId': serializer.toJson<int>(trainId),
+      'position': serializer.toJson<int>(position),
+      'uicNumber': serializer.toJson<String?>(uicNumber),
+      'vehicleName': serializer.toJson<String>(vehicleName),
+      'length': serializer.toJson<double>(length),
+      'emptyWeight': serializer.toJson<double>(emptyWeight),
+      'loadWeight': serializer.toJson<double>(loadWeight),
+      'axles': serializer.toJson<int>(axles),
+      'brakeType': serializer.toJson<String>(brakeType),
+      'brakeWeight': serializer.toJson<double>(brakeWeight),
+    };
+  }
+
+  TrainVehicle copyWith({
+    int? id,
+    int? trainId,
+    int? position,
+    Value<String?> uicNumber = const Value.absent(),
+    String? vehicleName,
+    double? length,
+    double? emptyWeight,
+    double? loadWeight,
+    int? axles,
+    String? brakeType,
+    double? brakeWeight,
+  }) => TrainVehicle(
+    id: id ?? this.id,
+    trainId: trainId ?? this.trainId,
+    position: position ?? this.position,
+    uicNumber: uicNumber.present ? uicNumber.value : this.uicNumber,
+    vehicleName: vehicleName ?? this.vehicleName,
+    length: length ?? this.length,
+    emptyWeight: emptyWeight ?? this.emptyWeight,
+    loadWeight: loadWeight ?? this.loadWeight,
+    axles: axles ?? this.axles,
+    brakeType: brakeType ?? this.brakeType,
+    brakeWeight: brakeWeight ?? this.brakeWeight,
+  );
+  TrainVehicle copyWithCompanion(TrainVehiclesCompanion data) {
+    return TrainVehicle(
+      id: data.id.present ? data.id.value : this.id,
+      trainId: data.trainId.present ? data.trainId.value : this.trainId,
+      position: data.position.present ? data.position.value : this.position,
+      uicNumber: data.uicNumber.present ? data.uicNumber.value : this.uicNumber,
+      vehicleName: data.vehicleName.present
+          ? data.vehicleName.value
+          : this.vehicleName,
+      length: data.length.present ? data.length.value : this.length,
+      emptyWeight: data.emptyWeight.present
+          ? data.emptyWeight.value
+          : this.emptyWeight,
+      loadWeight: data.loadWeight.present
+          ? data.loadWeight.value
+          : this.loadWeight,
+      axles: data.axles.present ? data.axles.value : this.axles,
+      brakeType: data.brakeType.present ? data.brakeType.value : this.brakeType,
+      brakeWeight: data.brakeWeight.present
+          ? data.brakeWeight.value
+          : this.brakeWeight,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrainVehicle(')
+          ..write('id: $id, ')
+          ..write('trainId: $trainId, ')
+          ..write('position: $position, ')
+          ..write('uicNumber: $uicNumber, ')
+          ..write('vehicleName: $vehicleName, ')
+          ..write('length: $length, ')
+          ..write('emptyWeight: $emptyWeight, ')
+          ..write('loadWeight: $loadWeight, ')
+          ..write('axles: $axles, ')
+          ..write('brakeType: $brakeType, ')
+          ..write('brakeWeight: $brakeWeight')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    trainId,
+    position,
+    uicNumber,
+    vehicleName,
+    length,
+    emptyWeight,
+    loadWeight,
+    axles,
+    brakeType,
+    brakeWeight,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrainVehicle &&
+          other.id == this.id &&
+          other.trainId == this.trainId &&
+          other.position == this.position &&
+          other.uicNumber == this.uicNumber &&
+          other.vehicleName == this.vehicleName &&
+          other.length == this.length &&
+          other.emptyWeight == this.emptyWeight &&
+          other.loadWeight == this.loadWeight &&
+          other.axles == this.axles &&
+          other.brakeType == this.brakeType &&
+          other.brakeWeight == this.brakeWeight);
+}
+
+class TrainVehiclesCompanion extends UpdateCompanion<TrainVehicle> {
+  final Value<int> id;
+  final Value<int> trainId;
+  final Value<int> position;
+  final Value<String?> uicNumber;
+  final Value<String> vehicleName;
+  final Value<double> length;
+  final Value<double> emptyWeight;
+  final Value<double> loadWeight;
+  final Value<int> axles;
+  final Value<String> brakeType;
+  final Value<double> brakeWeight;
+  const TrainVehiclesCompanion({
+    this.id = const Value.absent(),
+    this.trainId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.uicNumber = const Value.absent(),
+    this.vehicleName = const Value.absent(),
+    this.length = const Value.absent(),
+    this.emptyWeight = const Value.absent(),
+    this.loadWeight = const Value.absent(),
+    this.axles = const Value.absent(),
+    this.brakeType = const Value.absent(),
+    this.brakeWeight = const Value.absent(),
+  });
+  TrainVehiclesCompanion.insert({
+    this.id = const Value.absent(),
+    required int trainId,
+    required int position,
+    this.uicNumber = const Value.absent(),
+    required String vehicleName,
+    required double length,
+    required double emptyWeight,
+    this.loadWeight = const Value.absent(),
+    required int axles,
+    required String brakeType,
+    required double brakeWeight,
+  }) : trainId = Value(trainId),
+       position = Value(position),
+       vehicleName = Value(vehicleName),
+       length = Value(length),
+       emptyWeight = Value(emptyWeight),
+       axles = Value(axles),
+       brakeType = Value(brakeType),
+       brakeWeight = Value(brakeWeight);
+  static Insertable<TrainVehicle> custom({
+    Expression<int>? id,
+    Expression<int>? trainId,
+    Expression<int>? position,
+    Expression<String>? uicNumber,
+    Expression<String>? vehicleName,
+    Expression<double>? length,
+    Expression<double>? emptyWeight,
+    Expression<double>? loadWeight,
+    Expression<int>? axles,
+    Expression<String>? brakeType,
+    Expression<double>? brakeWeight,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (trainId != null) 'train_id': trainId,
+      if (position != null) 'position': position,
+      if (uicNumber != null) 'uic_number': uicNumber,
+      if (vehicleName != null) 'vehicle_name': vehicleName,
+      if (length != null) 'length': length,
+      if (emptyWeight != null) 'empty_weight': emptyWeight,
+      if (loadWeight != null) 'load_weight': loadWeight,
+      if (axles != null) 'axles': axles,
+      if (brakeType != null) 'brake_type': brakeType,
+      if (brakeWeight != null) 'brake_weight': brakeWeight,
+    });
+  }
+
+  TrainVehiclesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? trainId,
+    Value<int>? position,
+    Value<String?>? uicNumber,
+    Value<String>? vehicleName,
+    Value<double>? length,
+    Value<double>? emptyWeight,
+    Value<double>? loadWeight,
+    Value<int>? axles,
+    Value<String>? brakeType,
+    Value<double>? brakeWeight,
+  }) {
+    return TrainVehiclesCompanion(
+      id: id ?? this.id,
+      trainId: trainId ?? this.trainId,
+      position: position ?? this.position,
+      uicNumber: uicNumber ?? this.uicNumber,
+      vehicleName: vehicleName ?? this.vehicleName,
+      length: length ?? this.length,
+      emptyWeight: emptyWeight ?? this.emptyWeight,
+      loadWeight: loadWeight ?? this.loadWeight,
+      axles: axles ?? this.axles,
+      brakeType: brakeType ?? this.brakeType,
+      brakeWeight: brakeWeight ?? this.brakeWeight,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (trainId.present) {
+      map['train_id'] = Variable<int>(trainId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (uicNumber.present) {
+      map['uic_number'] = Variable<String>(uicNumber.value);
+    }
+    if (vehicleName.present) {
+      map['vehicle_name'] = Variable<String>(vehicleName.value);
+    }
+    if (length.present) {
+      map['length'] = Variable<double>(length.value);
+    }
+    if (emptyWeight.present) {
+      map['empty_weight'] = Variable<double>(emptyWeight.value);
+    }
+    if (loadWeight.present) {
+      map['load_weight'] = Variable<double>(loadWeight.value);
+    }
+    if (axles.present) {
+      map['axles'] = Variable<int>(axles.value);
+    }
+    if (brakeType.present) {
+      map['brake_type'] = Variable<String>(brakeType.value);
+    }
+    if (brakeWeight.present) {
+      map['brake_weight'] = Variable<double>(brakeWeight.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrainVehiclesCompanion(')
+          ..write('id: $id, ')
+          ..write('trainId: $trainId, ')
+          ..write('position: $position, ')
+          ..write('uicNumber: $uicNumber, ')
+          ..write('vehicleName: $vehicleName, ')
+          ..write('length: $length, ')
+          ..write('emptyWeight: $emptyWeight, ')
+          ..write('loadWeight: $loadWeight, ')
+          ..write('axles: $axles, ')
+          ..write('brakeType: $brakeType, ')
+          ..write('brakeWeight: $brakeWeight')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TrainsTable trains = $TrainsTable(this);
+  late final $VehicleCatalogTable vehicleCatalog = $VehicleCatalogTable(this);
+  late final $TrainVehiclesTable trainVehicles = $TrainVehiclesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [trains];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    trains,
+    vehicleCatalog,
+    trainVehicles,
+  ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'trains',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('train_vehicles', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$TrainsTableCreateCompanionBuilder =
     TrainsCompanion Function({
       Value<int> id,
+      Value<bool> useVehicleRoster,
       Value<String?> trainName,
       Value<int?> trainNumber,
       Value<int?> maxSpeed,
@@ -2181,6 +3436,7 @@ typedef $$TrainsTableCreateCompanionBuilder =
 typedef $$TrainsTableUpdateCompanionBuilder =
     TrainsCompanion Function({
       Value<int> id,
+      Value<bool> useVehicleRoster,
       Value<String?> trainName,
       Value<int?> trainNumber,
       Value<int?> maxSpeed,
@@ -2218,6 +3474,29 @@ typedef $$TrainsTableUpdateCompanionBuilder =
       Value<String?> tjrFileName,
     });
 
+final class $$TrainsTableReferences
+    extends BaseReferences<_$AppDatabase, $TrainsTable, Train> {
+  $$TrainsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$TrainVehiclesTable, List<TrainVehicle>>
+  _trainVehiclesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.trainVehicles,
+    aliasName: 'trains__id__train_vehicles__train_id',
+  );
+
+  $$TrainVehiclesTableProcessedTableManager get trainVehiclesRefs {
+    final manager = $$TrainVehiclesTableTableManager(
+      $_db,
+      $_db.trainVehicles,
+    ).filter((f) => f.trainId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_trainVehiclesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$TrainsTableFilterComposer
     extends Composer<_$AppDatabase, $TrainsTable> {
   $$TrainsTableFilterComposer({
@@ -2229,6 +3508,11 @@ class $$TrainsTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get useVehicleRoster => $composableBuilder(
+    column: $table.useVehicleRoster,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2406,6 +3690,31 @@ class $$TrainsTableFilterComposer
     column: $table.tjrFileName,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> trainVehiclesRefs(
+    Expression<bool> Function($$TrainVehiclesTableFilterComposer f) f,
+  ) {
+    final $$TrainVehiclesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.trainVehicles,
+      getReferencedColumn: (t) => t.trainId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrainVehiclesTableFilterComposer(
+            $db: $db,
+            $table: $db.trainVehicles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TrainsTableOrderingComposer
@@ -2419,6 +3728,11 @@ class $$TrainsTableOrderingComposer
   });
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get useVehicleRoster => $composableBuilder(
+    column: $table.useVehicleRoster,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2610,6 +3924,11 @@ class $$TrainsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<bool> get useVehicleRoster => $composableBuilder(
+    column: $table.useVehicleRoster,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get trainName =>
       $composableBuilder(column: $table.trainName, builder: (column) => column);
 
@@ -2774,6 +4093,31 @@ class $$TrainsTableAnnotationComposer
     column: $table.tjrFileName,
     builder: (column) => column,
   );
+
+  Expression<T> trainVehiclesRefs<T extends Object>(
+    Expression<T> Function($$TrainVehiclesTableAnnotationComposer a) f,
+  ) {
+    final $$TrainVehiclesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.trainVehicles,
+      getReferencedColumn: (t) => t.trainId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrainVehiclesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.trainVehicles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TrainsTableTableManager
@@ -2787,9 +4131,9 @@ class $$TrainsTableTableManager
           $$TrainsTableAnnotationComposer,
           $$TrainsTableCreateCompanionBuilder,
           $$TrainsTableUpdateCompanionBuilder,
-          (Train, BaseReferences<_$AppDatabase, $TrainsTable, Train>),
+          (Train, $$TrainsTableReferences),
           Train,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool trainVehiclesRefs})
         > {
   $$TrainsTableTableManager(_$AppDatabase db, $TrainsTable table)
     : super(
@@ -2805,6 +4149,7 @@ class $$TrainsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<bool> useVehicleRoster = const Value.absent(),
                 Value<String?> trainName = const Value.absent(),
                 Value<int?> trainNumber = const Value.absent(),
                 Value<int?> maxSpeed = const Value.absent(),
@@ -2842,6 +4187,7 @@ class $$TrainsTableTableManager
                 Value<String?> tjrFileName = const Value.absent(),
               }) => TrainsCompanion(
                 id: id,
+                useVehicleRoster: useVehicleRoster,
                 trainName: trainName,
                 trainNumber: trainNumber,
                 maxSpeed: maxSpeed,
@@ -2881,6 +4227,7 @@ class $$TrainsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<bool> useVehicleRoster = const Value.absent(),
                 Value<String?> trainName = const Value.absent(),
                 Value<int?> trainNumber = const Value.absent(),
                 Value<int?> maxSpeed = const Value.absent(),
@@ -2918,6 +4265,7 @@ class $$TrainsTableTableManager
                 Value<String?> tjrFileName = const Value.absent(),
               }) => TrainsCompanion.insert(
                 id: id,
+                useVehicleRoster: useVehicleRoster,
                 trainName: trainName,
                 trainNumber: trainNumber,
                 maxSpeed: maxSpeed,
@@ -2958,15 +4306,41 @@ class $$TrainsTableTableManager
               .map(
                 (e) => (
                   e.readTable<$TrainsTable, Train>(table),
-                  BaseReferences<_$AppDatabase, $TrainsTable, Train>(
-                    db,
-                    table,
-                    e,
-                  ),
+                  $$TrainsTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({trainVehiclesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (trainVehiclesRefs) db.trainVehicles,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (trainVehiclesRefs)
+                    await $_getPrefetchedData<
+                      Train,
+                      $TrainsTable,
+                      TrainVehicle
+                    >(
+                      currentTable: table,
+                      referencedTable: $$TrainsTableReferences
+                          ._trainVehiclesRefsTable(db),
+                      managerFromTypedResult: (p0) => $$TrainsTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).trainVehiclesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.trainId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -2981,9 +4355,722 @@ typedef $$TrainsTableProcessedTableManager =
       $$TrainsTableAnnotationComposer,
       $$TrainsTableCreateCompanionBuilder,
       $$TrainsTableUpdateCompanionBuilder,
-      (Train, BaseReferences<_$AppDatabase, $TrainsTable, Train>),
+      (Train, $$TrainsTableReferences),
       Train,
+      PrefetchHooks Function({bool trainVehiclesRefs})
+    >;
+typedef $$VehicleCatalogTableCreateCompanionBuilder =
+    VehicleCatalogCompanion Function({
+      Value<int> id,
+      required String seriesName,
+      Value<bool> isLocomotive,
+      required double length,
+      required double emptyWeight,
+      required int axles,
+      required String defaultBrakeType,
+      required double defaultBrakeWeight,
+    });
+typedef $$VehicleCatalogTableUpdateCompanionBuilder =
+    VehicleCatalogCompanion Function({
+      Value<int> id,
+      Value<String> seriesName,
+      Value<bool> isLocomotive,
+      Value<double> length,
+      Value<double> emptyWeight,
+      Value<int> axles,
+      Value<String> defaultBrakeType,
+      Value<double> defaultBrakeWeight,
+    });
+
+class $$VehicleCatalogTableFilterComposer
+    extends Composer<_$AppDatabase, $VehicleCatalogTable> {
+  $$VehicleCatalogTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seriesName => $composableBuilder(
+    column: $table.seriesName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLocomotive => $composableBuilder(
+    column: $table.isLocomotive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get length => $composableBuilder(
+    column: $table.length,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get axles => $composableBuilder(
+    column: $table.axles,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultBrakeType => $composableBuilder(
+    column: $table.defaultBrakeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get defaultBrakeWeight => $composableBuilder(
+    column: $table.defaultBrakeWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VehicleCatalogTableOrderingComposer
+    extends Composer<_$AppDatabase, $VehicleCatalogTable> {
+  $$VehicleCatalogTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seriesName => $composableBuilder(
+    column: $table.seriesName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isLocomotive => $composableBuilder(
+    column: $table.isLocomotive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get length => $composableBuilder(
+    column: $table.length,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get axles => $composableBuilder(
+    column: $table.axles,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultBrakeType => $composableBuilder(
+    column: $table.defaultBrakeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get defaultBrakeWeight => $composableBuilder(
+    column: $table.defaultBrakeWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VehicleCatalogTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VehicleCatalogTable> {
+  $$VehicleCatalogTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get seriesName => $composableBuilder(
+    column: $table.seriesName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isLocomotive => $composableBuilder(
+    column: $table.isLocomotive,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get length =>
+      $composableBuilder(column: $table.length, builder: (column) => column);
+
+  GeneratedColumn<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get axles =>
+      $composableBuilder(column: $table.axles, builder: (column) => column);
+
+  GeneratedColumn<String> get defaultBrakeType => $composableBuilder(
+    column: $table.defaultBrakeType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get defaultBrakeWeight => $composableBuilder(
+    column: $table.defaultBrakeWeight,
+    builder: (column) => column,
+  );
+}
+
+class $$VehicleCatalogTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VehicleCatalogTable,
+          VehicleCatalogData,
+          $$VehicleCatalogTableFilterComposer,
+          $$VehicleCatalogTableOrderingComposer,
+          $$VehicleCatalogTableAnnotationComposer,
+          $$VehicleCatalogTableCreateCompanionBuilder,
+          $$VehicleCatalogTableUpdateCompanionBuilder,
+          (
+            VehicleCatalogData,
+            BaseReferences<
+              _$AppDatabase,
+              $VehicleCatalogTable,
+              VehicleCatalogData
+            >,
+          ),
+          VehicleCatalogData,
+          PrefetchHooks Function()
+        > {
+  $$VehicleCatalogTableTableManager(
+    _$AppDatabase db,
+    $VehicleCatalogTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VehicleCatalogTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VehicleCatalogTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VehicleCatalogTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> seriesName = const Value.absent(),
+                Value<bool> isLocomotive = const Value.absent(),
+                Value<double> length = const Value.absent(),
+                Value<double> emptyWeight = const Value.absent(),
+                Value<int> axles = const Value.absent(),
+                Value<String> defaultBrakeType = const Value.absent(),
+                Value<double> defaultBrakeWeight = const Value.absent(),
+              }) => VehicleCatalogCompanion(
+                id: id,
+                seriesName: seriesName,
+                isLocomotive: isLocomotive,
+                length: length,
+                emptyWeight: emptyWeight,
+                axles: axles,
+                defaultBrakeType: defaultBrakeType,
+                defaultBrakeWeight: defaultBrakeWeight,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String seriesName,
+                Value<bool> isLocomotive = const Value.absent(),
+                required double length,
+                required double emptyWeight,
+                required int axles,
+                required String defaultBrakeType,
+                required double defaultBrakeWeight,
+              }) => VehicleCatalogCompanion.insert(
+                id: id,
+                seriesName: seriesName,
+                isLocomotive: isLocomotive,
+                length: length,
+                emptyWeight: emptyWeight,
+                axles: axles,
+                defaultBrakeType: defaultBrakeType,
+                defaultBrakeWeight: defaultBrakeWeight,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$VehicleCatalogTable, VehicleCatalogData>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $VehicleCatalogTable,
+                    VehicleCatalogData
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VehicleCatalogTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VehicleCatalogTable,
+      VehicleCatalogData,
+      $$VehicleCatalogTableFilterComposer,
+      $$VehicleCatalogTableOrderingComposer,
+      $$VehicleCatalogTableAnnotationComposer,
+      $$VehicleCatalogTableCreateCompanionBuilder,
+      $$VehicleCatalogTableUpdateCompanionBuilder,
+      (
+        VehicleCatalogData,
+        BaseReferences<_$AppDatabase, $VehicleCatalogTable, VehicleCatalogData>,
+      ),
+      VehicleCatalogData,
       PrefetchHooks Function()
+    >;
+typedef $$TrainVehiclesTableCreateCompanionBuilder =
+    TrainVehiclesCompanion Function({
+      Value<int> id,
+      required int trainId,
+      required int position,
+      Value<String?> uicNumber,
+      required String vehicleName,
+      required double length,
+      required double emptyWeight,
+      Value<double> loadWeight,
+      required int axles,
+      required String brakeType,
+      required double brakeWeight,
+    });
+typedef $$TrainVehiclesTableUpdateCompanionBuilder =
+    TrainVehiclesCompanion Function({
+      Value<int> id,
+      Value<int> trainId,
+      Value<int> position,
+      Value<String?> uicNumber,
+      Value<String> vehicleName,
+      Value<double> length,
+      Value<double> emptyWeight,
+      Value<double> loadWeight,
+      Value<int> axles,
+      Value<String> brakeType,
+      Value<double> brakeWeight,
+    });
+
+final class $$TrainVehiclesTableReferences
+    extends BaseReferences<_$AppDatabase, $TrainVehiclesTable, TrainVehicle> {
+  $$TrainVehiclesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TrainsTable _trainIdTable(_$AppDatabase db) =>
+      db.trains.createAlias('train_vehicles__train_id__trains__id');
+
+  $$TrainsTableProcessedTableManager get trainId {
+    final $_column = $_itemColumn<int>('train_id')!;
+
+    final manager = $$TrainsTableTableManager(
+      $_db,
+      $_db.trains,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_trainIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$TrainVehiclesTableFilterComposer
+    extends Composer<_$AppDatabase, $TrainVehiclesTable> {
+  $$TrainVehiclesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uicNumber => $composableBuilder(
+    column: $table.uicNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleName => $composableBuilder(
+    column: $table.vehicleName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get length => $composableBuilder(
+    column: $table.length,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get loadWeight => $composableBuilder(
+    column: $table.loadWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get axles => $composableBuilder(
+    column: $table.axles,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get brakeType => $composableBuilder(
+    column: $table.brakeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get brakeWeight => $composableBuilder(
+    column: $table.brakeWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TrainsTableFilterComposer get trainId {
+    final $$TrainsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.trainId,
+      referencedTable: $db.trains,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrainsTableFilterComposer(
+            $db: $db,
+            $table: $db.trains,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrainVehiclesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TrainVehiclesTable> {
+  $$TrainVehiclesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uicNumber => $composableBuilder(
+    column: $table.uicNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleName => $composableBuilder(
+    column: $table.vehicleName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get length => $composableBuilder(
+    column: $table.length,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get loadWeight => $composableBuilder(
+    column: $table.loadWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get axles => $composableBuilder(
+    column: $table.axles,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get brakeType => $composableBuilder(
+    column: $table.brakeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get brakeWeight => $composableBuilder(
+    column: $table.brakeWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TrainsTableOrderingComposer get trainId {
+    final $$TrainsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.trainId,
+      referencedTable: $db.trains,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrainsTableOrderingComposer(
+            $db: $db,
+            $table: $db.trains,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrainVehiclesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TrainVehiclesTable> {
+  $$TrainVehiclesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get uicNumber =>
+      $composableBuilder(column: $table.uicNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicleName => $composableBuilder(
+    column: $table.vehicleName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get length =>
+      $composableBuilder(column: $table.length, builder: (column) => column);
+
+  GeneratedColumn<double> get emptyWeight => $composableBuilder(
+    column: $table.emptyWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get loadWeight => $composableBuilder(
+    column: $table.loadWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get axles =>
+      $composableBuilder(column: $table.axles, builder: (column) => column);
+
+  GeneratedColumn<String> get brakeType =>
+      $composableBuilder(column: $table.brakeType, builder: (column) => column);
+
+  GeneratedColumn<double> get brakeWeight => $composableBuilder(
+    column: $table.brakeWeight,
+    builder: (column) => column,
+  );
+
+  $$TrainsTableAnnotationComposer get trainId {
+    final $$TrainsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.trainId,
+      referencedTable: $db.trains,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TrainsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.trains,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$TrainVehiclesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TrainVehiclesTable,
+          TrainVehicle,
+          $$TrainVehiclesTableFilterComposer,
+          $$TrainVehiclesTableOrderingComposer,
+          $$TrainVehiclesTableAnnotationComposer,
+          $$TrainVehiclesTableCreateCompanionBuilder,
+          $$TrainVehiclesTableUpdateCompanionBuilder,
+          (TrainVehicle, $$TrainVehiclesTableReferences),
+          TrainVehicle,
+          PrefetchHooks Function({bool trainId})
+        > {
+  $$TrainVehiclesTableTableManager(_$AppDatabase db, $TrainVehiclesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrainVehiclesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrainVehiclesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrainVehiclesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> trainId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String?> uicNumber = const Value.absent(),
+                Value<String> vehicleName = const Value.absent(),
+                Value<double> length = const Value.absent(),
+                Value<double> emptyWeight = const Value.absent(),
+                Value<double> loadWeight = const Value.absent(),
+                Value<int> axles = const Value.absent(),
+                Value<String> brakeType = const Value.absent(),
+                Value<double> brakeWeight = const Value.absent(),
+              }) => TrainVehiclesCompanion(
+                id: id,
+                trainId: trainId,
+                position: position,
+                uicNumber: uicNumber,
+                vehicleName: vehicleName,
+                length: length,
+                emptyWeight: emptyWeight,
+                loadWeight: loadWeight,
+                axles: axles,
+                brakeType: brakeType,
+                brakeWeight: brakeWeight,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int trainId,
+                required int position,
+                Value<String?> uicNumber = const Value.absent(),
+                required String vehicleName,
+                required double length,
+                required double emptyWeight,
+                Value<double> loadWeight = const Value.absent(),
+                required int axles,
+                required String brakeType,
+                required double brakeWeight,
+              }) => TrainVehiclesCompanion.insert(
+                id: id,
+                trainId: trainId,
+                position: position,
+                uicNumber: uicNumber,
+                vehicleName: vehicleName,
+                length: length,
+                emptyWeight: emptyWeight,
+                loadWeight: loadWeight,
+                axles: axles,
+                brakeType: brakeType,
+                brakeWeight: brakeWeight,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrainVehiclesTable, TrainVehicle>(table),
+                  $$TrainVehiclesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({trainId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (trainId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.trainId,
+                                referencedTable: $$TrainVehiclesTableReferences
+                                    ._trainIdTable(db),
+                                referencedColumn: $$TrainVehiclesTableReferences
+                                    ._trainIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TrainVehiclesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TrainVehiclesTable,
+      TrainVehicle,
+      $$TrainVehiclesTableFilterComposer,
+      $$TrainVehiclesTableOrderingComposer,
+      $$TrainVehiclesTableAnnotationComposer,
+      $$TrainVehiclesTableCreateCompanionBuilder,
+      $$TrainVehiclesTableUpdateCompanionBuilder,
+      (TrainVehicle, $$TrainVehiclesTableReferences),
+      TrainVehicle,
+      PrefetchHooks Function({bool trainId})
     >;
 
 class $AppDatabaseManager {
@@ -2991,4 +5078,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$TrainsTableTableManager get trains =>
       $$TrainsTableTableManager(_db, _db.trains);
+  $$VehicleCatalogTableTableManager get vehicleCatalog =>
+      $$VehicleCatalogTableTableManager(_db, _db.vehicleCatalog);
+  $$TrainVehiclesTableTableManager get trainVehicles =>
+      $$TrainVehiclesTableTableManager(_db, _db.trainVehicles);
 }
