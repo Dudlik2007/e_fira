@@ -97,8 +97,9 @@ class StorageService {
     String? fileName,
   }) async {
     final folder = await _getTjrFolder();
-    final safeFileName = (fileName?.trim().isNotEmpty ?? false)
-        ? fileName!.trim().replaceAll(RegExp(r'[\\/]'), '_')
+    final providedFileName = fileName?.trim();
+    final safeFileName = (providedFileName != null && providedFileName.isNotEmpty)
+        ? providedFileName.replaceAll(RegExp(r'[\\/]'), '_')
         : '$trainNumber.txt';
     final path = '$folder/$safeFileName';
     final file = File(path);

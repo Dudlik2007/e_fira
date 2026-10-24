@@ -7,11 +7,7 @@ class TrainEditorPage extends StatefulWidget {
   final Train? train;
   final Future<void> Function(TrainsCompanion) onSave;
 
-  const TrainEditorPage({
-    super.key,
-    required this.train,
-    required this.onSave,
-  });
+  const TrainEditorPage({super.key, required this.train, required this.onSave});
 
   @override
   State<TrainEditorPage> createState() => _TrainEditorPageState();
@@ -19,12 +15,9 @@ class TrainEditorPage extends StatefulWidget {
 
 class _TrainEditorPageState extends State<TrainEditorPage> {
   final _formKey = GlobalKey<FormState>();
-  
-  // NOVÁ STAVOVÁ PROMĚNNÁ PRO PŘEPÍNAČ
-  bool useVehicleRoster = false;
 
   String? trainName;
-  int? trainNumber;
+  String? trainNumber;
   int? maxSpeed;
   int? trainLength;
   String? trainWheels;
@@ -67,9 +60,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     super.initState();
     final t = widget.train;
 
-    // Načteme stav přepínače z databáze
-    useVehicleRoster = t?.useVehicleRoster ?? false;
-
     trainName = t?.trainName ?? "Nový vlak";
     trainNumber = t?.trainNumber;
     maxSpeed = t?.maxSpeed;
@@ -98,17 +88,35 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     powerSupplyStatus = t?.powerSupplyStatus;
     highSpeedCarsStatus = t?.highSpeedCarsStatus;
 
-    _actualCtrl = TextEditingController(text: t?.brakingPercentageActual?.toString() ?? '');
-    _requiredCtrl = TextEditingController(text: t?.brakingPercentageRequired?.toString() ?? '');
-    _missingCtrl = TextEditingController(text: t?.brakingPercentageMissing?.toString() ?? '');
+    _actualCtrl = TextEditingController(
+      text: t?.brakingPercentageActual?.toString() ?? '',
+    );
+    _requiredCtrl = TextEditingController(
+      text: t?.brakingPercentageRequired?.toString() ?? '',
+    );
+    _missingCtrl = TextEditingController(
+      text: t?.brakingPercentageMissing?.toString() ?? '',
+    );
 
-    _activeVehiclesCountCtrl = TextEditingController(text: t?.activeVehiclesCount?.toString() ?? '');
-    _transportVehiclesCountCtrl = TextEditingController(text: t?.transportVehiclesCount?.toString() ?? '');
-    _totalVehiclesCountCtrl = TextEditingController(text: t?.totalVehiclesCount?.toString() ?? '');
+    _activeVehiclesCountCtrl = TextEditingController(
+      text: t?.activeVehiclesCount?.toString() ?? '',
+    );
+    _transportVehiclesCountCtrl = TextEditingController(
+      text: t?.transportVehiclesCount?.toString() ?? '',
+    );
+    _totalVehiclesCountCtrl = TextEditingController(
+      text: t?.totalVehiclesCount?.toString() ?? '',
+    );
 
-    _activeVehiclesWeightCtrl = TextEditingController(text: t?.activeVehiclesWeight?.toString() ?? '');
-    _transportVehiclesWeightCtrl = TextEditingController(text: t?.transportVehiclesWeight?.toString() ?? '');
-    _totalVehiclesWeightCtrl = TextEditingController(text: t?.totalVehiclesWeight?.toString() ?? '');
+    _activeVehiclesWeightCtrl = TextEditingController(
+      text: t?.activeVehiclesWeight?.toString() ?? '',
+    );
+    _transportVehiclesWeightCtrl = TextEditingController(
+      text: t?.transportVehiclesWeight?.toString() ?? '',
+    );
+    _totalVehiclesWeightCtrl = TextEditingController(
+      text: t?.totalVehiclesWeight?.toString() ?? '',
+    );
   }
 
   @override
@@ -149,16 +157,17 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     final transport = double.tryParse(_transportVehiclesWeightCtrl.text) ?? 0.0;
     final total = active + transport;
 
-    final totalStr = total.toStringAsFixed(total.truncateToDouble() == total ? 0 : 1);
+    final totalStr = total.toStringAsFixed(
+      total.truncateToDouble() == total ? 0 : 1,
+    );
     _totalVehiclesWeightCtrl.text = totalStr;
   }
 
   Future<void> _save() async {
     final companion = TrainsCompanion(
-      id: widget.train == null ? const drift.Value.absent() : drift.Value(widget.train!.id),
-      
-      // Ukládáme novou proměnnou!
-      useVehicleRoster: drift.Value(useVehicleRoster),
+      id: widget.train == null
+          ? const drift.Value.absent()
+          : drift.Value(widget.train!.id),
 
       trainName: drift.Value(trainName),
       trainNumber: drift.Value(trainNumber),
@@ -173,18 +182,30 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
       brakingModeP: drift.Value(brakingModeP),
       brakingModeR: drift.Value(brakingModeR),
       brakingModeRMg: drift.Value(brakingModeRMg),
-      
+
       brakingPercentageActual: drift.Value(int.tryParse(_actualCtrl.text)),
       brakingPercentageRequired: drift.Value(int.tryParse(_requiredCtrl.text)),
       brakingPercentageMissing: drift.Value(int.tryParse(_missingCtrl.text)),
 
-      activeVehiclesCount: drift.Value(int.tryParse(_activeVehiclesCountCtrl.text)),
-      transportVehiclesCount: drift.Value(int.tryParse(_transportVehiclesCountCtrl.text)),
-      totalVehiclesCount: drift.Value(int.tryParse(_totalVehiclesCountCtrl.text)),
+      activeVehiclesCount: drift.Value(
+        int.tryParse(_activeVehiclesCountCtrl.text),
+      ),
+      transportVehiclesCount: drift.Value(
+        int.tryParse(_transportVehiclesCountCtrl.text),
+      ),
+      totalVehiclesCount: drift.Value(
+        int.tryParse(_totalVehiclesCountCtrl.text),
+      ),
 
-      activeVehiclesWeight: drift.Value(double.tryParse(_activeVehiclesWeightCtrl.text)),
-      transportVehiclesWeight: drift.Value(double.tryParse(_transportVehiclesWeightCtrl.text)),
-      totalVehiclesWeight: drift.Value(double.tryParse(_totalVehiclesWeightCtrl.text)),
+      activeVehiclesWeight: drift.Value(
+        double.tryParse(_activeVehiclesWeightCtrl.text),
+      ),
+      transportVehiclesWeight: drift.Value(
+        double.tryParse(_transportVehiclesWeightCtrl.text),
+      ),
+      totalVehiclesWeight: drift.Value(
+        double.tryParse(_totalVehiclesWeightCtrl.text),
+      ),
 
       departureStation: drift.Value(departureStation),
       currentStation: drift.Value(currentStation),
@@ -199,7 +220,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
       doorControlStatus: drift.Value(doorControlStatus),
       powerSupplyStatus: drift.Value(powerSupplyStatus),
       highSpeedCarsStatus: drift.Value(highSpeedCarsStatus),
-      
+
       brakePercent: drift.Value(widget.train?.brakePercent),
       topSpeedAllowed: drift.Value(widget.train?.topSpeedAllowed),
       trainCars: drift.Value(widget.train?.trainCars),
@@ -211,7 +232,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
   }
 
   // ============== HELPER METODY PRO KRESLENÍ UI ==============
-  
+
   Widget _buildField({
     required String label,
     String? initial,
@@ -226,12 +247,17 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
         initialValue: controller == null ? initial : null,
         controller: controller,
         readOnly: readOnly,
-        style: TextStyle(color: readOnly ? Colors.white60 : Colors.white, fontSize: 13),
+        style: TextStyle(
+          color: readOnly ? Colors.white60 : Colors.white,
+          fontSize: 13,
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
           filled: true,
-          fillColor: readOnly ? const Color(0xFF141414) : const Color(0xFF1E1E1E),
+          fillColor: readOnly
+              ? const Color(0xFF141414)
+              : const Color(0xFF1E1E1E),
           isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
@@ -259,7 +285,9 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             return const Iterable<String>.empty();
           }
           return suggestions.where((String option) {
-            return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+            return option.toLowerCase().contains(
+              textEditingValue.text.toLowerCase(),
+            );
           });
         },
         onSelected: (String selection) {
@@ -301,7 +329,13 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                     final String option = options.elementAt(index);
                     return ListTile(
                       dense: true,
-                      title: Text(option, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      title: Text(
+                        option,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
                       onTap: () => onSelected(option),
                     );
                   },
@@ -320,7 +354,9 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
-    final currentValue = (value != null && items.contains(value)) ? value : null;
+    final currentValue = (value != null && items.contains(value))
+        ? value
+        : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -341,10 +377,7 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
         style: const TextStyle(color: Colors.white, fontSize: 13),
         icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
         items: items.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item),
-          );
+          return DropdownMenuItem<String>(value: item, child: Text(item));
         }).toList(),
         onChanged: onChanged,
       ),
@@ -429,7 +462,6 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                
                 _buildSectionCard("Základní informace", [
                   _buildRow2(
                     _buildField(
@@ -439,11 +471,10 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                     ),
                     _buildField(
                       label: "Číslo vlaku",
-                      initial: trainNumber?.toString(),
-                      isNumber: true,
+                      initial: trainNumber,
                       onChanged: (v) {
                         setState(() {
-                          trainNumber = int.tryParse(v);
+                          trainNumber = v;
                         });
                       },
                     ),
@@ -459,208 +490,140 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                     _buildAutocompleteField(
                       label: "Název souboru TJŘ",
                       initialValue: tjrFileName ?? '',
-                      suggestions: trainNumber != null ? [trainNumber.toString()] : [],
+                      suggestions:
+                          trainNumber != null && trainNumber!.trim().isNotEmpty
+                          ? [trainNumber!]
+                          : const [],
                       onChanged: (v) => tjrFileName = v,
                     ),
                   ),
                 ]),
 
-                // --- NOVÝ PŘEPÍNAČ: RUČNĚ vs. VÝKAZ ---
-                _buildSectionCard("Režim zadávání parametrů vlaku", [
-                  SwitchListTile(
-                    title: const Text(
-                      "Počítat automaticky z Výkazu vozidel",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                _buildSectionCard("Parametry (Hmotnost a Délka)", [
+                  _buildRow2(
+                    _buildField(
+                      label: "Délka vlaku (m)",
+                      initial: trainLength?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => trainLength = int.tryParse(v),
                     ),
-                    subtitle: const Text(
-                      "Délka, hmotnosti a brzdící procenta se vypočítají ze složení soupravy.",
-                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                    _buildField(
+                      label: "Počet náprav",
+                      initial: trainWheels,
+                      onChanged: (v) => trainWheels = v,
                     ),
-                    activeColor: Colors.blueAccent,
-                    contentPadding: EdgeInsets.zero,
-                    value: useVehicleRoster,
-                    onChanged: (bool value) {
-                      setState(() {
-                        useVehicleRoster = value;
-                      });
-                    },
+                  ),
+                  const SizedBox(height: 4),
+                  _buildRow2(
+                    _buildField(
+                      label: "Činná vozidla (počet)",
+                      controller: _activeVehiclesCountCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcTotalVehiclesCount(),
+                    ),
+                    _buildField(
+                      label: "Hmotnost činných (t)",
+                      controller: _activeVehiclesWeightCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcTotalVehiclesWeight(),
+                    ),
+                  ),
+                  _buildRow2(
+                    _buildField(
+                      label: "Doprovodná vozidla (počet)",
+                      controller: _transportVehiclesCountCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcTotalVehiclesCount(),
+                    ),
+                    _buildField(
+                      label: "Hmotnost doprovodných (t)",
+                      controller: _transportVehiclesWeightCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcTotalVehiclesWeight(),
+                    ),
+                  ),
+                  _buildRow2(
+                    _buildField(
+                      label: "Vozidla celkem (automaticky)",
+                      controller: _totalVehiclesCountCtrl,
+                      isNumber: true,
+                      readOnly: true,
+                      onChanged: (v) {},
+                    ),
+                    _buildField(
+                      label: "Hmotnost celkem (t) (automaticky)",
+                      controller: _totalVehiclesWeightCtrl,
+                      isNumber: true,
+                      readOnly: true,
+                      onChanged: (v) {},
+                    ),
                   ),
                 ]),
 
-                if (useVehicleRoster) ...[
-                  // --- ZOBRAZENO POUZE KDYŽ JE ZAPNUTÝ VÝKAZ VOZIDEL ---
-                  _buildSectionCard("Složení soupravy", [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2C2C2C),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.train_outlined, color: Colors.blueAccent, size: 40),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Údaje o vlaku budou automaticky vypočítány z výkazu vozidel.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              if (widget.train == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Nejprve vlak uložte, až poté můžete přidávat vozy.')),
-                                );
-                              } else {
-                                // TODO: Navigace do nového Editoru Výkazu vozidel (Katalogu)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Editor soupravy se připravuje...')),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.edit_document),
-                            label: const Text("SESTAVIT VÝKAZ VOZIDEL"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            ),
-                          ),
-                        ],
-                      ),
+                _buildSectionCard("Brzdy", [
+                  _buildRow3(
+                    _buildField(
+                      label: "Typ brzdy D (počet)",
+                      initial: brakeTypeD?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakeTypeD = int.tryParse(v),
                     ),
-                  ]),
-                ] else ...[
-                  // --- ZOBRAZENO POUZE KDYŽ SE VŠE PÍŠE RUČNĚ (JAKO DOSUD) ---
-                  _buildSectionCard("Ruční parametry (Hmotnost a Délka)", [
-                    _buildRow2(
-                      _buildField(
-                        label: "Délka vlaku (m)",
-                        initial: trainLength?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => trainLength = int.tryParse(v),
-                      ),
-                      _buildField(
-                        label: "Počet náprav",
-                        initial: trainWheels,
-                        onChanged: (v) => trainWheels = v,
-                      ),
+                    _buildField(
+                      label: "Typ brzdy K (počet)",
+                      initial: brakeTypeK?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakeTypeK = int.tryParse(v),
                     ),
-                    const SizedBox(height: 4),
-                    _buildRow2(
-                      _buildField(
-                        label: "Činná vozidla (počet)",
-                        controller: _activeVehiclesCountCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcTotalVehiclesCount(),
-                      ),
-                      _buildField(
-                        label: "Hmotnost činných (t)",
-                        controller: _activeVehiclesWeightCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcTotalVehiclesWeight(),
-                      ),
+                    _buildDropdownField(
+                      label: "Stanovený režim brzdění",
+                      value: brakeMode,
+                      items: const ['P', 'R', 'R+Mg'],
+                      onChanged: (v) => brakeMode = v,
                     ),
-                    _buildRow2(
-                      _buildField(
-                        label: "Doprovodná vozidla (počet)",
-                        controller: _transportVehiclesCountCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcTotalVehiclesCount(),
-                      ),
-                      _buildField(
-                        label: "Hmotnost doprovodných (t)",
-                        controller: _transportVehiclesWeightCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcTotalVehiclesWeight(),
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildRow3(
+                    _buildField(
+                      label: "Režim P (počet)",
+                      initial: brakingModeP?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeP = int.tryParse(v),
                     ),
-                    _buildRow2(
-                      _buildField(
-                        label: "Vozidla celkem (automaticky)",
-                        controller: _totalVehiclesCountCtrl,
-                        isNumber: true,
-                        readOnly: true,
-                        onChanged: (v) {},
-                      ),
-                      _buildField(
-                        label: "Hmotnost celkem (t) (automaticky)",
-                        controller: _totalVehiclesWeightCtrl,
-                        isNumber: true,
-                        readOnly: true,
-                        onChanged: (v) {},
-                      ),
+                    _buildField(
+                      label: "Režim R (počet)",
+                      initial: brakingModeR?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeR = int.tryParse(v),
                     ),
-                  ]),
-
-                  _buildSectionCard("Brzdy", [
-                    _buildRow3(
-                      _buildField(
-                        label: "Typ brzdy D (počet)",
-                        initial: brakeTypeD?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => brakeTypeD = int.tryParse(v),
-                      ),
-                      _buildField(
-                        label: "Typ brzdy K (počet)",
-                        initial: brakeTypeK?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => brakeTypeK = int.tryParse(v),
-                      ),
-                      _buildDropdownField(
-                        label: "Stanovený režim brzdění",
-                        value: brakeMode,
-                        items: const ['P', 'R', 'R+Mg'],
-                        onChanged: (v) => brakeMode = v,
-                      ),
+                    _buildField(
+                      label: "Režim R+Mg (počet)",
+                      initial: brakingModeRMg?.toString(),
+                      isNumber: true,
+                      onChanged: (v) => brakingModeRMg = int.tryParse(v),
                     ),
-                    const SizedBox(height: 4),
-                    _buildRow3(
-                      _buildField(
-                        label: "Režim P (počet)",
-                        initial: brakingModeP?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => brakingModeP = int.tryParse(v),
-                      ),
-                      _buildField(
-                        label: "Režim R (počet)",
-                        initial: brakingModeR?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => brakingModeR = int.tryParse(v),
-                      ),
-                      _buildField(
-                        label: "Režim R+Mg (počet)",
-                        initial: brakingModeRMg?.toString(),
-                        isNumber: true,
-                        onChanged: (v) => brakingModeRMg = int.tryParse(v),
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildRow3(
+                    _buildField(
+                      label: "Skutečné brzd. %",
+                      controller: _actualCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcMissingBrakes(),
                     ),
-                    const SizedBox(height: 4),
-                    _buildRow3(
-                      _buildField(
-                        label: "Skutečné brzd. %",
-                        controller: _actualCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcMissingBrakes(),
-                      ),
-                      _buildField(
-                        label: "Potřebné brzd. %",
-                        controller: _requiredCtrl,
-                        isNumber: true,
-                        onChanged: (v) => _recalcMissingBrakes(),
-                      ),
-                      _buildField(
-                        label: "Chybějící brzd. %",
-                        controller: _missingCtrl,
-                        isNumber: true,
-                        onChanged: (v) {},
-                      ),
+                    _buildField(
+                      label: "Potřebné brzd. %",
+                      controller: _requiredCtrl,
+                      isNumber: true,
+                      onChanged: (v) => _recalcMissingBrakes(),
                     ),
-                  ]),
-                ], // KONEC PODMÍNKY if (useVehicleRoster)
+                    _buildField(
+                      label: "Chybějící brzd. %",
+                      controller: _missingCtrl,
+                      isNumber: true,
+                      onChanged: (v) {},
+                    ),
+                  ),
+                ]),
 
                 _buildSectionCard("Stanice", [
                   _buildRow3(
@@ -724,7 +687,14 @@ class _TrainEditorPageState extends State<TrainEditorPage> {
                     _buildDropdownField(
                       label: "Systémy otvírání dveří",
                       value: doorControlStatus,
-                      items: const ['TB 5', 'TB 0', 'TB-S', 'SSOD', 'CODS', 'LAT'],
+                      items: const [
+                        'TB 5',
+                        'TB 0',
+                        'TB-S',
+                        'SSOD',
+                        'CODS',
+                        'LAT',
+                      ],
                       onChanged: (v) => doorControlStatus = v,
                     ),
                   ),

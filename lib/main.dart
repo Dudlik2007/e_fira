@@ -35,18 +35,17 @@ void main() async {
   // Načtení uloženého režimu
   appDarkMode.value = darkMode;
 
-  // ============================================================
-  // NOVÉ: SPUŠTĚNÍ SYNCHRONIZACE NA POZADÍ
-  // ============================================================
-  // Voláme funkci bez 'await'. Tím pádem se hlavní vlákno nezastaví,
-  // aplikace se okamžitě spustí a data se zaktualizují na pozadí.
-  _runStartupSync();
-
   runApp(
     MyApp(
       skipWelcome: skipWelcome,
     ),
   );
+
+  // Spouštíme synchronizaci až po prvním frame, aby všechny platform-channel
+  // operace (Firebase/Firestore, SQLite atd.) běžely v UI izolatu.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _runStartupSync();
+  });
 }
 
 // ============================================================

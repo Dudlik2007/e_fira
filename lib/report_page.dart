@@ -4,9 +4,8 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import 'report_data.dart';
 import 'train_selection_page.dart';
-// TODO: Zde později odkomentuješ import pro Výkaz vozidel
-// import 'vehicle_roster_page.dart'; 
 
+// --- ReportPage Widget ---
 class ReportPage extends StatelessWidget {
   final ReportData data;
   const ReportPage({super.key, required this.data});
@@ -23,11 +22,30 @@ class ReportPage extends StatelessWidget {
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
-  static const TextStyle _labelTextStyle = TextStyle(fontSize: 11, color: Colors.white70);
-  static const TextStyle _valueTextStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white);
-  static const TextStyle _smallValueTextStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white);
-  static const TextStyle _indicatorLabelStyle = TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold);
-  static const TextStyle _indicatorValueStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white);
+  static const TextStyle _labelTextStyle = TextStyle(
+    fontSize: 11,
+    color: Colors.white70,
+  );
+  static const TextStyle _valueTextStyle = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+  static const TextStyle _smallValueTextStyle = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+  static const TextStyle _indicatorLabelStyle = TextStyle(
+    fontSize: 11,
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+  );
+  static const TextStyle _indicatorValueStyle = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
 
   // --- Widget Parts ---
 
@@ -43,7 +61,10 @@ class ReportPage extends StatelessWidget {
           const Expanded(child: Divider(color: Colors.white, thickness: 1)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(data.trainNumber.isNotEmpty ? data.trainNumber : '???', style: _headerTextStyle),
+            child: Text(
+              data.trainNumber.isNotEmpty ? data.trainNumber : '???',
+              style: _headerTextStyle,
+            ),
           ),
           const Expanded(child: Divider(color: Colors.white, thickness: 1)),
           const SizedBox(width: 8),
@@ -63,12 +84,21 @@ class ReportPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(4),
           color: Colors.black87,
-          child: Text(label, textAlign: TextAlign.center, style: _indicatorLabelStyle, softWrap: true),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: _indicatorLabelStyle,
+            softWrap: true,
+          ),
         ),
         Container(
           padding: const EdgeInsets.all(6),
           color: color,
-          child: Text(value.isNotEmpty ? value : '–––', textAlign: TextAlign.center, style: _indicatorValueStyle),
+          child: Text(
+            value.isNotEmpty ? value : '–––',
+            textAlign: TextAlign.center,
+            style: _indicatorValueStyle,
+          ),
         ),
       ],
     );
@@ -88,26 +118,50 @@ class ReportPage extends StatelessWidget {
         children: [
           Text(title, style: _labelTextStyle),
           const SizedBox(height: 4),
-          Text(value.isNotEmpty ? value : '–––', style: _valueTextStyle, overflow: TextOverflow.ellipsis),
+          Text(
+            value.isNotEmpty ? value : '–––',
+            style: _valueTextStyle,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
 
-  Widget _dataCell(String title, String value, {Color bg = cellBg, TextAlign align = TextAlign.left}) {
-    final bool isEmpty = value.trim().isEmpty || value == '---' || value == '–––';
+  Widget _dataCell(
+    String title,
+    String value, {
+    Color bg = cellBg,
+    TextAlign align = TextAlign.left,
+  }) {
+    final bool isEmpty =
+        value.trim().isEmpty || value == '---' || value == '–––';
     final displayValue = isEmpty ? '–––' : value;
-    final valueStyle = isEmpty ? _valueTextStyle.copyWith(color: Colors.redAccent) : _valueTextStyle;
+    final valueStyle = isEmpty
+        ? _valueTextStyle.copyWith(color: Colors.redAccent)
+        : _valueTextStyle;
 
     return Container(
       color: bg,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       child: Column(
-        crossAxisAlignment: align == TextAlign.left ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        crossAxisAlignment: align == TextAlign.left
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
         children: [
-          if (title.isNotEmpty) Text(title, style: _labelTextStyle, overflow: TextOverflow.ellipsis),
+          if (title.isNotEmpty)
+            Text(
+              title,
+              style: _labelTextStyle,
+              overflow: TextOverflow.ellipsis,
+            ),
           if (title.isNotEmpty) const SizedBox(height: 4),
-          Text(displayValue, textAlign: align, style: valueStyle, softWrap: true),
+          Text(
+            displayValue,
+            textAlign: align,
+            style: valueStyle,
+            softWrap: true,
+          ),
         ],
       ),
     );
@@ -130,37 +184,66 @@ class ReportPage extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(value.isNotEmpty ? value : '0', style: _valueTextStyle, overflow: TextOverflow.ellipsis),
+            child: Text(
+              value.isNotEmpty ? value : '0',
+              style: _valueTextStyle,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _brakeCheckCell({required String title, required String kdy, required String where, required String by, Color bg = cellBg}) {
+  Widget _brakeCheckCell({
+    required String title,
+    required String kdy,
+    required String where,
+    required String by,
+    Color bg = cellBg,
+  }) {
     return Container(
       color: bg,
       padding: const EdgeInsets.all(8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: _labelTextStyle),
-        const SizedBox(height: 4),
-        _detailRow('kdy:', kdy),
-        _detailRow('kde:', where),
-        _detailRow('kým:', by),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: _labelTextStyle),
+          const SizedBox(height: 4),
+          _detailRow('kdy:', kdy),
+          _detailRow('kde:', where),
+          _detailRow('kým:', by),
+        ],
+      ),
     );
   }
 
   Widget _detailRow(String label, String value) {
     final bool isEmpty = value.trim().isEmpty;
-    final valueStyle = isEmpty ? _smallValueTextStyle.copyWith(color: Colors.redAccent) : _smallValueTextStyle;
+    final valueStyle = isEmpty
+        ? _smallValueTextStyle.copyWith(color: Colors.redAccent)
+        : _smallValueTextStyle;
     final displayValue = isEmpty ? '–––' : value;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(children: [
-        SizedBox(width: 32, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70))),
-        Expanded(child: Text(displayValue, style: valueStyle, overflow: TextOverflow.ellipsis)),
-      ]),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              displayValue,
+              style: valueStyle,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -169,54 +252,100 @@ class ReportPage extends StatelessWidget {
   Widget _buildSpeedAndBrakingPercentageRow() {
     String brakePercentDisplay =
         'skut.: ${data.brakingPercentageActual}  potř.: ${data.brakingPercentageRequired}  chyb.: ${data.brakingPercentageMissing}';
-    return Row(children: [
-      Expanded(flex: 5, child: _dataCell('Nejvyšší rychlost vlaku:', '${data.maxSpeed} km/h', bg: darkCell)),
-      const SizedBox(width: 6),
-      Expanded(flex: 5, child: _dataCell('Brzdící procento:', brakePercentDisplay, bg: lightCell)),
-    ]);
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: _dataCell(
+            'Nejvyšší rychlost vlaku:',
+            '${data.maxSpeed} km/h',
+            bg: darkCell,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 5,
+          child: _dataCell(
+            'Brzdící procento:',
+            brakePercentDisplay,
+            bg: lightCell,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildTrainLengthAndBrakeTypesRow() {
-    return Row(children: [
-      Expanded(flex: 3, child: _dataCell('Délka vlaku:', '${data.trainLength} m', bg: darkCell)),
-      const SizedBox(width: 6),
-      Expanded(flex: 2, child: _dataCell('Počet náprav:', data.trainWheels, bg: darkCell, align: TextAlign.center)),
-      const SizedBox(width: 6),
-      Expanded(
-        flex: 5,
-        child: Container(
-          color: lightCell,
-          padding: const EdgeInsets.all(6),
-          child: Column(children: [
-            const Text('Počet zap. brzd (druh brzdy):', style: _labelTextStyle),
-            const SizedBox(height: 4),
-            Row(children: [
-              Expanded(child: _iconCell('D', data.brakeTypeD)),
-              const SizedBox(width: 6),
-              Expanded(child: _iconCell('K', data.brakeTypeK)),
-            ]),
-          ]),
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: _dataCell(
+            'Délka vlaku:',
+            '${data.trainLength} m',
+            bg: darkCell,
+          ),
         ),
-      ),
-    ]);
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 2,
+          child: _dataCell(
+            'Počet náprav:',
+            data.trainWheels,
+            bg: darkCell,
+            align: TextAlign.center,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 5,
+          child: Container(
+            color: lightCell,
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              children: [
+                const Text(
+                  'Počet zap. brzd (druh brzdy):',
+                  style: _labelTextStyle,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(child: _iconCell('D', data.brakeTypeD)),
+                    const SizedBox(width: 6),
+                    Expanded(child: _iconCell('K', data.brakeTypeK)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildVehicleCountsAndWeightsRow() {
-    return Row(children: [
-      Expanded(
+    return Row(
+      children: [
+        Expanded(
           flex: 5,
           child: _dataCell(
-              'Počet ŽKV:',
-              'činná: ${data.activeVehiclesCount}  dopr.: ${data.transportVehiclesCount}  vlak: ${data.totalVehiclesCount}',
-              bg: darkCell)),
-      const SizedBox(width: 6),
-      Expanded(
+            'Počet ŽKV:',
+            'činná: ${data.activeVehiclesCount}  dopr.: ${data.transportVehiclesCount}  vlak: ${data.totalVehiclesCount}',
+            bg: darkCell,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
           flex: 5,
           child: _dataCell(
-              'Hmotnost ŽKV:',
-              'činná: ${data.activeVehiclesWeight}  dopr.: ${data.transportVehiclesWeight}  vlak: ${data.totalVehiclesWeight} t',
-              bg: lightCell)),
-    ]);
+            'Hmotnost ŽKV:',
+            'činná: ${data.activeVehiclesWeight}  dopr.: ${data.transportVehiclesWeight}  vlak: ${data.totalVehiclesWeight} t',
+            bg: lightCell,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildBrakeChecksRow() {
@@ -226,8 +355,8 @@ class ReportPage extends StatelessWidget {
 
     DateTime uzbTime;
     String jzbKdy = "";
-    String jzbKde = data.jzbLocation; 
-    String jzbKym = data.jzbPerformedBy; 
+    String jzbKde = data.jzbLocation;
+    String jzbKym = data.jzbPerformedBy;
 
     if (simulateOldUzb) {
       final jzbTime = now;
@@ -237,54 +366,88 @@ class ReportPage extends StatelessWidget {
 
       final randomHours = Random().nextInt(20);
       final randomMinutes = Random().nextInt(60);
-      uzbTime = jzbTime.subtract(Duration(hours: 4 + randomHours, minutes: randomMinutes));
+      uzbTime = jzbTime.subtract(
+        Duration(hours: 4 + randomHours, minutes: randomMinutes),
+      );
     } else {
       final randomMinutes = Random().nextInt(4 * 60);
       uzbTime = now.subtract(Duration(minutes: randomMinutes));
     }
 
-    return Row(children: [
-      Expanded(
+    return Row(
+      children: [
+        Expanded(
           child: _brakeCheckCell(
-              title: 'ÚZB vykonána:',
-              kdy: DateFormat('HH:mm').format(uzbTime),
-              where: data.uzbLocation,
-              by: data.uzbPerformedBy,
-              bg: darkCell)),
-      const SizedBox(width: 6),
-      Expanded(
+            title: 'ÚZB vykonána:',
+            kdy: DateFormat('HH:mm').format(uzbTime),
+            where: data.uzbLocation,
+            by: data.uzbPerformedBy,
+            bg: darkCell,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
           child: _brakeCheckCell(
-              title: 'JZB vykonána:',
-              kdy: jzbKdy,
-              where: jzbKde,
-              by: jzbKym,
-              bg: lightCell)),
-    ]);
+            title: 'JZB vykonána:',
+            kdy: jzbKdy,
+            where: jzbKde,
+            by: jzbKym,
+            bg: lightCell,
+          ),
+        ),
+      ],
+    );
   }
-  
+
   Widget _buildBrakingModeRow() {
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Expanded(flex: 4, child: _dataCell('Stanovený režim brzdění', data.brakeMode, bg: darkCell)),
-      const SizedBox(width: 6),
-      Expanded(
-        flex: 6,
-        child: Container(
-          color: lightCell,
-          padding: const EdgeInsets.all(6),
-          child: Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 4,
+          child: _dataCell(
+            'Stanovený režim brzdění',
+            data.brakeMode,
+            bg: darkCell,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 6,
+          child: Container(
+            color: lightCell,
+            padding: const EdgeInsets.all(6),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Počet zap. brzd (režim brzdění)', style: _labelTextStyle),
+                const Text(
+                  'Počet zap. brzd (režim brzdění)',
+                  style: _labelTextStyle,
+                ),
                 const SizedBox(height: 4),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                  Text('P: ${data.brakingModeP}', style: _smallValueTextStyle),
-                  Text('R: ${data.brakingModeR}', style: _smallValueTextStyle),
-                  Text('R+Mg: ${data.brakingModeRMg}', style: _smallValueTextStyle),
-                ]),
-              ]),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Text(
+                      'P: ${data.brakingModeP}',
+                      style: _smallValueTextStyle,
+                    ),
+                    Text(
+                      'R: ${data.brakingModeR}',
+                      style: _smallValueTextStyle,
+                    ),
+                    Text(
+                      'R+Mg: ${data.brakingModeRMg}',
+                      style: _smallValueTextStyle,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _buildParkingForceRow(BuildContext context) {
@@ -298,7 +461,10 @@ class ReportPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Potřebná zajišťovací síla [Fpark] [kN]', style: _labelTextStyle),
+          const Text(
+            'Potřebná zajišťovací síla [Fpark] [kN]',
+            style: _labelTextStyle,
+          ),
           const SizedBox(height: 6),
           ElevatedButton(
             onPressed: () => _showParkingForceDialog(context),
@@ -306,9 +472,14 @@ class ReportPage extends StatelessWidget {
               backgroundColor: Colors.blueGrey[700],
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
-            child: const Text('VYPOČÍTAT ZAJIŠŤOVACÍ SÍLU', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'VYPOČÍTAT ZAJIŠŤOVACÍ SÍLU',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -320,24 +491,30 @@ class ReportPage extends StatelessWidget {
     // Zde můžeš implementovat přesný vzorec pro Fpark.
     // Příklad hrubého odhadu: Hmotnost vlaku * sklon (promile) * konstanta.
     final double weight = data.totalVehiclesWeight;
-    final double force = weight > 0 ? (weight * 0.05) : 0.0; 
+    final double force = weight > 0 ? (weight * 0.05) : 0.0;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: darkCell,
-          title: const Text('Zajišťovací síla', style: TextStyle(color: Colors.white)),
+          title: const Text(
+            'Zajišťovací síla',
+            style: TextStyle(color: Colors.white),
+          ),
           content: Text(
-            weight > 0 
-              ? 'Při celkové hmotnosti $weight t je orientační potřebná zajišťovací síla:\n\n${force.toStringAsFixed(1)} kN\n\n(Zde doplň přesný výpočet ze spádu)' 
-              : 'Pro výpočet musíte nejprve zadat celkovou hmotnost vlaku.',
+            weight > 0
+                ? 'Při celkové hmotnosti $weight t je orientační potřebná zajišťovací síla:\n\n${force.toStringAsFixed(1)} kN\n\n(Zde doplň přesný výpočet ze spádu)'
+                : 'Pro výpočet musíte nejprve zadat celkovou hmotnost vlaku.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('ZAVŘÍT', style: TextStyle(color: Colors.blueAccent)),
+              child: const Text(
+                'ZAVŘÍT',
+                style: TextStyle(color: Colors.blueAccent),
+              ),
             ),
           ],
         );
@@ -345,36 +522,55 @@ class ReportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSecurableVehiclesRow(){
-      return Row(children: [
+  Widget _buildSecurableVehiclesRow() {
+    return Row(
+      children: [
         Expanded(
           flex: 6,
-          child: _dataCell('ŽKV s upotřebitelnou zajišťovací brzdou', '–––', bg: darkCell),
+          child: _dataCell(
+            'ŽKV s upotřebitelnou zajišťovací brzdou',
+            '–––',
+            bg: darkCell,
+          ),
         ),
         const SizedBox(width: 6),
         Expanded(
           flex: 4,
           child: _dataCell('Brzdící váha', '–––', bg: lightCell),
         ),
-      ]);
+      ],
+    );
   }
 
-  Widget _buildLastVehicleRow(){
-      return Row(children: [
-        Expanded(flex: 5, child: _dataCell('Poslední vozidlo vlaku', '–––', bg: darkCell)),
-        const SizedBox(width: 6),
-        Expanded(flex: 5, child: _dataCell('Brzdicí váha (celkem)', '–––', bg: lightCell)),
-      ]);
-  }
-
-  Widget _buildSignedByRow(){
-      return Align(
-        alignment: Alignment.centerRight,
-        child: SizedBox(
-          width: 220,
-          child: _dataCell('Sepsal', data.uzbPerformedBy, bg: darkCell, align: TextAlign.right),
+  Widget _buildLastVehicleRow() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: _dataCell('Poslední vozidlo vlaku', '–––', bg: darkCell),
         ),
-      );
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 5,
+          child: _dataCell('Brzdicí váha (celkem)', '–––', bg: lightCell),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignedByRow() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: SizedBox(
+        width: 220,
+        child: _dataCell(
+          'Sepsal',
+          data.uzbPerformedBy,
+          bg: darkCell,
+          align: TextAlign.right,
+        ),
+      ),
+    );
   }
 
   Widget _buildBigTable(BuildContext context) {
@@ -396,11 +592,14 @@ class ReportPage extends StatelessWidget {
           const SizedBox(height: 6),
           _buildBrakeChecksRow(),
           const SizedBox(height: 6),
-           Container(
+          Container(
             width: double.infinity,
             color: darkCell,
             padding: const EdgeInsets.all(6),
-            child: const Text('Další informace o vlaku:', style: _labelTextStyle),
+            child: const Text(
+              'Další informace o vlaku:',
+              style: _labelTextStyle,
+            ),
           ),
           const SizedBox(height: 6),
           _buildBrakingModeRow(),
@@ -431,9 +630,24 @@ class ReportPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: _pad),
                 child: Row(
                   children: [
-                    Expanded(child: _smallInfoBox(title: 'Výchozí ŽST:', value: data.departureStation)),
-                    Expanded(child: _smallInfoBox(title: 'Sepsáno v:', value: data.currentStation)),
-                    Expanded(child: _smallInfoBox(title: 'Konečná ŽST:', value: data.destinationStation)),
+                    Expanded(
+                      child: _smallInfoBox(
+                        title: 'Výchozí ŽST:',
+                        value: data.departureStation,
+                      ),
+                    ),
+                    Expanded(
+                      child: _smallInfoBox(
+                        title: 'Sepsáno v:',
+                        value: data.currentStation,
+                      ),
+                    ),
+                    Expanded(
+                      child: _smallInfoBox(
+                        title: 'Konečná ŽST:',
+                        value: data.destinationStation,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -442,13 +656,37 @@ class ReportPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: _pad),
                 child: Row(
                   children: [
-                    Expanded(child: _coloredIndicatorSplit('Překl. záchran. brzdy', data.nbuStatus, Colors.green)),
+                    Expanded(
+                      child: _coloredIndicatorSplit(
+                        'Překl. záchran. brzdy',
+                        data.nbuStatus,
+                        Colors.green,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Expanded(child: _coloredIndicatorSplit('Systém ovládání dveří', data.doorControlStatus, Colors.amber)),
+                    Expanded(
+                      child: _coloredIndicatorSplit(
+                        'Systém ovládání dveří',
+                        data.doorControlStatus,
+                        Colors.amber,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Expanded(child: _coloredIndicatorSplit('Napájení na 25 kV AC', data.powerSupplyStatus, Colors.lightBlue)),
+                    Expanded(
+                      child: _coloredIndicatorSplit(
+                        'Napájení na 25 kV AC',
+                        data.powerSupplyStatus,
+                        Colors.lightBlue,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Expanded(child: _coloredIndicatorSplit('Rychlostní profil', data.highSpeedCarsStatus, Colors.brown)),
+                    Expanded(
+                      child: _coloredIndicatorSplit(
+                        'Rychlostní profil',
+                        data.highSpeedCarsStatus,
+                        Colors.brown,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -471,7 +709,9 @@ class ReportPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white12,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text('ZAVŘÍT BEZ POTVRZENÍ'),
                 ),
@@ -480,45 +720,25 @@ class ReportPage extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                     Navigator.pushAndRemoveUntil(
-                       context,
-                       MaterialPageRoute(builder: (context) => const TrainSelectionPage()),
-                       (Route<dynamic> route) => false,
-                     );
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TrainSelectionPage(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: const Text('POTVRDIT A ZAVŘÍT'),
                 ),
               ),
               const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  // --- PROPOJENÍ NA VÝKAZ VOZIDEL ---
-                  /* 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      // Předáme vlaku ID nebo jeho instanci
-                      builder: (context) => VehicleRosterPage(trainNumber: data.trainNumber), 
-                    ),
-                  );
-                  */
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Výkaz vozidel se připravuje...')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white12,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('OTEVŘÍT VV'),
-              ),
             ],
           ),
         ),

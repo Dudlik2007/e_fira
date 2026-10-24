@@ -65,14 +65,13 @@ class DatabaseUpdater {
       final client = http.Client();
 
       for (final train in trains) {
-        // Pokud vlak nemá číslo, nemáme podle čeho eBulu pojmenovat
-        if (train.trainNumber == null) continue;
-        
-        final numberStr = train.trainNumber.toString();
-        
-        String fileName = (train.tjrFileName != null && train.tjrFileName!.trim().isNotEmpty)
-            ? train.tjrFileName!.trim()
-            : '$numberStr.txt';
+        final String? trainNumber = train.trainNumber?.trim();
+        if (trainNumber == null || trainNumber.isEmpty) continue;
+
+        final String? configuredFileName = train.tjrFileName?.trim();
+        String fileName = (configuredFileName != null && configuredFileName.isNotEmpty)
+            ? configuredFileName
+            : '$trainNumber.txt';
 
         if (!fileName.toLowerCase().endsWith('.txt')) {
           fileName = '$fileName.txt';
@@ -81,11 +80,10 @@ class DatabaseUpdater {
         try {
           final uri = baseUri.resolve(fileName);
           final response = await client.get(uri).timeout(const Duration(seconds: 8));
-          
+
           if (response.statusCode == 200) {
-            // Používáme tvoji původní StorageService pro uložení eBuly
             final text = StorageService.decodeText(response.bodyBytes);
-            await StorageService.saveTjrFile(numberStr, text, fileName: fileName);
+            await StorageService.saveTjrFile(trainNumber, text, fileName: fileName);
             downloaded++;
           } else {
             failed++;

@@ -209,6 +209,8 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final errorMessage = _error;
+
     return Scaffold(
       backgroundColor: Colors.black, 
       appBar: AppBar(
@@ -218,9 +220,9 @@ class _TrainTjrViewPageState extends State<TrainTjrViewPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : _error != null
+          : errorMessage != null
               ? Center(
-                  child: Text(_error!,
+                  child: Text(errorMessage,
                       style: const TextStyle(color: Colors.red, fontSize: 16),
                       textAlign: TextAlign.center))
               : _buildContent(),

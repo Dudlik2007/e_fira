@@ -139,7 +139,13 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final driverKey = typedLicense.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
 
     try {
-      final String vehicleName = _availableVehicles[_selectedVehicle!] ?? _selectedVehicle!;
+      final String? selectedVehicle = _selectedVehicle;
+      if (selectedVehicle == null) {
+        _showMessage('Vyberte prosím vozidlo.', color: Colors.red);
+        return;
+      }
+
+      final String vehicleName = _availableVehicles[selectedVehicle] ?? selectedVehicle;
       final Map<String, dynamic> dataToUpdate = {
         'name': typedName,
         'license': typedLicense,

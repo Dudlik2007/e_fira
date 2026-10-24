@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:e_fira/report_data.dart';
+import 'package:e_fira/database/app_database.dart';
 import 'package:e_fira/storage_service.dart';
 import 'package:e_fira/train_editor_page.dart';
 
@@ -14,24 +14,27 @@ void main() {
     expect(decoded, text);
   });
 
-  testWidgets('Train number accepts alphanumeric values like Os10542', (tester) async {
-    final train = ReportData(
+  testWidgets('Train number accepts alphanumeric values like Os10542', (
+    tester,
+  ) async {
+    final train = Train(
+      id: 1,
       trainName: 'Test',
       trainNumber: 'Os10542',
-      maxSpeed: '120',
-      trainLength: '200',
+      maxSpeed: 120,
+      trainLength: 200,
       trainCars: 2,
       trainWheels: '4',
-      brakeTypeD: '0',
-      brakeTypeK: '0',
+      brakeTypeD: 0,
+      brakeTypeK: 0,
       brakeMode: '',
-      brakingModeP: '0',
-      brakingModeR: '0',
-      brakingModeRMg: '0',
-      brakePercent: '0',
-      brakingPercentageActual: '0',
-      brakingPercentageRequired: '0',
-      brakingPercentageMissing: '0',
+      brakingModeP: 0,
+      brakingModeR: 0,
+      brakingModeRMg: 0,
+      brakePercent: 0,
+      brakingPercentageActual: 0,
+      brakingPercentageRequired: 0,
+      brakingPercentageMissing: 0,
       activeVehiclesCount: 0,
       transportVehiclesCount: 0,
       totalVehiclesCount: 0,
@@ -46,18 +49,16 @@ void main() {
       jzbLocation: '',
       jzbPerformedBy: '',
       nbuStatus: '',
-      topSpeedAllowed: '',
       doorControlStatus: '',
       powerSupplyStatus: '',
       highSpeedCarsStatus: '',
+      topSpeedAllowed: 0,
+      tjrFileName: 'Os10542.txt',
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        home: TrainEditorPage(
-          train: train,
-          onSave: (_) async {},
-        ),
+        home: TrainEditorPage(train: train, onSave: (_) async {}),
       ),
     );
 
