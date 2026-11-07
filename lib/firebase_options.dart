@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCuwbDuwJddmdFGHr4BKV33MIT06lALm1c',
-    appId: '1:616482867820:android:6e4534d98f60a020cae649',
+    appId: '1:616482867820:android:48bb4edee0a145fbcae649',
     messagingSenderId: '616482867820',
     projectId: 'e-fira',
     databaseURL: 'https://e-fira-default-rtdb.europe-west1.firebasedatabase.app',
@@ -66,7 +66,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyB9scqYetsEESCST8SSIxByAaei2AU79e4',
+    apiKey: 'AIzaSySyB9scqYetsEESCST8SSIxByAaei2AU79e4',
     appId: '1:616482867820:web:381e6e29e7971ce7cae649',
     messagingSenderId: '616482867820',
     projectId: 'e-fira',
@@ -75,4 +75,3 @@ class DefaultFirebaseOptions {
     storageBucket: 'e-fira.firebasestorage.app',
     measurementId: 'G-BTRLJMJBJD',
   );
-}

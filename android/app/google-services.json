@@ -8,12 +8,11 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:616482867820:android:6e4534d98f60a020cae649",
+        "mobilesdk_app_id": "1:616482867820:android:48bb4edee0a145fbcae649",
         "android_client_info": {
-          "package_name": "com.example.e_fira"
+          "package_name": "cz.minibrzda.efira"
         }
       },
-      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyCuwbDuwJddmdFGHr4BKV33MIT06lALm1c"
